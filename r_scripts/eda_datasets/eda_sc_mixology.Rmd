@@ -1,0 +1,202 @@
+---
+title: "Exploratory Analysis sc_mixology dataset"
+author: "Valerio Reffo"
+date: "2026-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(MultiAssayExperiment)
+library(SingleCellMultiModal)
+library(SingleCellExperiment)
+library(scuttle)
+library(AnnotationDbi)
+library(scran)
+library(scater)
+library(mclust)
+library(bluster)
+library(EnsDb.Hsapiens.v75)
+#library(tidySingle)
+```
+
+```{r}
+sc_mix <- readRDS("~/datasets/sc_mixology/sc_mix.RDS")
+```
+
+```{r}
+chr.loc <- mapIds(EnsDb.Hsapiens.v75, keys=rownames(sc_mix),
+                  keytype="SYMBOL", column="SEQNAME")
+
+is.mito <- which(chr.loc=="MT")
+table(is.mito)
+
+
+df <- perCellQCMetrics(sc_mix, subsets=list(Mito=is.mito))
+```
+
+```{r}
+# include them in the object
+colData(sc_mix) <- cbind(colData(sc_mix), df)
+colData(sc_mix)
+
+table(df$sum < 10000)
+
+table(df$subsets_Mito_percent > 5)
+
+summary(df$detected)
+
+summary(df$subsets_Mito_percent)
+```
+
+
+```{r}
+reasons <- perCellQCFilters(df, sub.fields="subsets_Mito_percent")
+colSums(as.matrix(reasons))
+summary(reasons$discard)
+sc_mix$discard <- reasons$discard
+```
+
+Train and test creation
+```{r}
+set.seed(42)
+n_samples <- ncol(sc_mix)
+indices <- sample(c("TRUE", "FALSE"), n_samples, replace = TRUE, prob = c(0.7, 0.3))
+#table(indices)
+sc_mix$is_train <- indices 
+table(sc_mix$is_train)
+```
+
+```{r}
+rowData(sc_mix)$gene_names <- rownames(sc_mix)
+#rowData(sc_mix)$gene_names
+```
+
+Save 2 separated dataset for train and test to ease the usage in python
+
+```{r}
+saveRDS(sc_mix, "~/datasets/sc_mixology/sc_mix.RDS")
+
+sc_mix[,sc_mix$is_train=="TRUE"] |>
+  saveRDS("~/datasets/sc_mixology/train_sc_mix.RDS")
+sc_mix[,sc_mix$is_train=="FALSE"] |>
+  saveRDS("~/datasets/sc_mixology/test_sc_mix.RDS")
+```
+
+# Diagnostic plots
+
+```{r}
+plotColData(sc_mix, y = "sum", colour_by = "discard") + ggtitle("Total count")
+```
+
+```{r}
+plotColData(sc_mix, y = "detected", colour_by = "discard") + ggtitle("Detected features")
+```
+
+```{r}
+plotColData(sc_mix, y = "subsets_Mito_percent", colour_by = "discard") + ggtitle("Mito percent")
+```
+
+```{r}
+plotColData(sc_mix, x="sum", y="subsets_Mito_percent", colour_by="discard")
+plotColData(sc_mix, x="detected", y="subsets_Mito_percent", colour_by="discard")
+```
+
+```{r}
+plotColData(sc_mix, x="cell_line", y="sum", colour_by="discard")
+plotColData(sc_mix, x="cell_line", y="detected", colour_by="discard")
+plotColData(sc_mix, x="cell_line_demuxlet", y="sum", colour_by="discard")
+plotColData(sc_mix, x="demuxlet_cls", y="sum", colour_by="discard")
+plotColData(sc_mix, x="demuxlet_cls", y="detected", colour_by="discard")
+```
+
+```{r}
+plotColData(sc_mix, x="cell_line", y="pct_counts_top_50_features", colour_by="discard")
+plotColData(sc_mix, x="cell_line", y="pct_counts_top_100_features", colour_by="discard")
+plotColData(sc_mix, x="cell_line", y="pct_counts_top_200_features", colour_by="discard")
+```
+
+
+```{r}
+table(sc_mix$cell_line)
+table(sc_mix$cell_line_demuxlet)
+```
+
+```{r}
+# normalization
+#sc_mix <- scuttle::logNormCounts(sc_mix)
+
+# identify highly variable genes
+dec <- modelGeneVar(sc_mix)
+chosen.hvgs <- dec$bio > 0
+
+# dimensionality reduction
+sc_mix <- runPCA(sc_mix, subset_row = chosen.hvgs, ntop = 1000)
+sc_mix <- runTSNE(sc_mix, dimred = "PCA")
+
+sc_mix$cl_fact <- as.factor(sc_mix$cell_line)
+plotTSNE(sc_mix, colour_by = "discard")
+```
+
+```{r}
+lib.sf <- librarySizeFactors(sc_mix)
+summary(lib.sf)
+
+hist(log10(lib.sf), xlab="Log10[Size factor]", col='grey80', breaks = 30)
+```
+
+```{r}
+library(scran)
+set.seed(100)
+clust <- quickCluster(sc_mix) 
+table(clust)
+```
+
+```{r}
+deconv.sf <- calculateSumFactors(sc_mix, cluster=clust)
+summary(deconv.sf)
+```
+
+```{r}
+plot(lib.sf, deconv.sf, xlab="Library size factor",
+    ylab="Deconvolution size factor", log='xy', pch=16,
+    col=as.integer(clust))
+abline(a=0, b=1, col="red")
+```
+
+```{r}
+dec.sce <- modelGeneVar(sc_mix)
+fit.sce <- metadata(dec.sce)
+
+plot(fit.sce$mean, fit.sce$var, xlab = "Mean of log-expression",
+     ylab = "Variance of log-expression")
+curve(fit.sce$trend(x), col = "dodgerblue", add = TRUE, lwd = 2)
+```
+
+```{r}
+hvg.sce.var <- getTopHVGs(dec.sce, n=1000)
+head(hvg.sce.var)
+
+sc_mix <- runPCA(sc_mix, subset_row=hvg.sce.var)
+sc_mix
+```
+
+```{r}
+percent.var <- attr(reducedDim(sc_mix), "percentVar")
+BiocGenerics::plotPCA(sc_mix, colour_by="discard")
+```
+
+
+
+
+
+
+
+
+
+
+
+

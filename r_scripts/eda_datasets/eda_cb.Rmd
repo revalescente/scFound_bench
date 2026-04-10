@@ -1,0 +1,110 @@
+---
+title: "eda_cb"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(MultiAssayExperiment)
+library(SingleCellMultiModal)
+library(SingleCellExperiment)
+library(scuttle)
+library(AnnotationDbi)
+library(scran)
+library(scater)
+library(mclust)
+library(bluster)
+library(EnsDb.Hsapiens.v75)
+```
+
+```{r}
+sce_cb <- readRDS("~/datasets/cord_blood/cord_blood_sce.RDS")
+```
+
+#### 1. find mithocondial genes  ####
+```{r}
+chr.loc <- mapIds(EnsDb.Hsapiens.v75, keys=rownames(sce_cb),
+                  keytype="SYMBOL", column="SEQNAME")
+
+is.mito <- which(chr.loc == c("MT"))
+table(is.mito)
+```
+
+```{r}
+df <- perCellQCMetrics(sce_cb, subsets=list(Mito=is.mito))
+
+# include them in the object
+colData(sce_cb) <- cbind(colData(sce_cb), df)
+colData(sce_cb)
+
+table(df$sum < 10000)
+
+table(df$subsets_Mito_percent > 5)
+
+summary(df$detected)
+
+summary(df$subsets_Mito_percent)
+```
+
+
+```{r}
+reasons <- perCellQCFilters(df, sub.fields=c("subsets_Mito_percent", "altexps_scADT_percent"))
+colSums(as.matrix(reasons))
+summary(reasons$discard)
+sce_cb$discard <- reasons$discard
+```
+
+Train and test creation
+```{r}
+set.seed(42)
+n_samples <- ncol(sce_cb)
+indices <- sample(c("TRUE", "FALSE"), n_samples, replace = TRUE, prob = c(0.7, 0.3))
+#table(indices)
+sce_cb$is_train <- indices 
+table(sce_cb$is_train)
+```
+
+Add a column in rowdata with gene_names
+
+```{r}
+rowData(sce_cb)$gene_names <- rownames(sce_cb)
+rowData(sce_cb)$gene_names
+```
+
+
+
+```{r}
+saveRDS(sce_cb, file = "~/datasets/cord_blood/cb_sce.RDS")
+#sce_cb <- readRDS("~/datasets/cord_blood/cb_sce.RDS")
+
+sce_cb[,sce_cb$is_train=="TRUE"] |>
+  saveRDS("~/datasets/cord_blood/train_sce_cb.RDS")
+sce_cb[,sce_cb$is_train=="FALSE"] |>
+  saveRDS("~/datasets/cord_blood/test_sce_cb.RDS")
+```
+
+# Diagnostic plots
+
+```{r}
+plotColData(sce_cb, y = "sum", colour_by = "discard") + ggtitle("Total count")
+plotColData(sce_cb, y = "sum", x = "celltype", colour_by = "discard") + ggtitle("Total count per sample")
+```
+
+```{r}
+plotColData(sce_cb, y = "detected", colour_by = "discard") + ggtitle("Detected features")
+plotColData(sce_cb, y = "detected", x = "celltype", colour_by = "discard") + ggtitle("Detected features per sample")
+```
+
+```{r}
+plotColData(sce_cb, y = "subsets_Mito_percent", colour_by = "discard") + ggtitle("Mito percent")
+plotColData(sce_cb, y = "subsets_Mito_percent", x = "celltype", colour_by = "discard") + ggtitle("Mito percent per sample")
+```
+
+```{r}
+plotColData(sce_cb, x="sum", y="subsets_Mito_percent", colour_by="discard")
+plotColData(sce_cb, x="detected", y="subsets_Mito_percent", colour_by="discard")
+```
+

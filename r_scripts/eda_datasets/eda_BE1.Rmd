@@ -1,0 +1,114 @@
+---
+title: "eda_BE1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(MultiAssayExperiment)
+library(SingleCellMultiModal)
+library(SingleCellExperiment)
+library(scuttle)
+library(AnnotationDbi)
+library(scran)
+library(scater)
+library(mclust)
+library(bluster)
+library(EnsDb.Hsapiens.v75)
+```
+
+```{r}
+sce_be1 <- readRDS("~/datasets/BE1/BE1_sce.RDS")
+```
+
+
+#### 1. find mithocondial genes  ####
+```{r}
+rownames(sce_be1) <- rowData(sce_be1)$Symbol
+chr.loc <- mapIds(EnsDb.Hsapiens.v75, keys=rownames(sce_be1),
+                  keytype="SYMBOL", column="SEQNAME")
+
+is.mito <- which(chr.loc == c("MT"))
+table(is.mito)
+```
+
+```{r}
+df <- perCellQCMetrics(sce_be1, subsets=list(Mito=is.mito))
+
+# include them in the object
+colData(sce_be1) <- cbind(colData(sce_be1), df)
+colData(sce_be1)
+
+table(df$sum < 10000)
+
+table(df$subsets_Mito_percent > 5)
+
+summary(df$detected)
+
+summary(df$subsets_Mito_percent)
+```
+
+
+```{r}
+reasons <- perCellQCFilters(df, sub.fields="subsets_Mito_percent")
+colSums(as.matrix(reasons))
+summary(reasons$discard)
+sce_be1$discard <- reasons$discard
+```
+
+### Remove the PBMC sample
+```{r}
+(sce_be1 <- sce_be1[,!sce_be1$Sample=="PBMCs"])
+```
+
+
+Train and test creation
+```{r}
+set.seed(42)
+n_samples <- ncol(sce_be1)
+indices <- sample(c("TRUE", "FALSE"), n_samples, replace = TRUE, prob = c(0.7, 0.3))
+#table(indices)
+sce_be1$is_train <- indices 
+table(sce_be1$is_train)
+```
+
+```{r}
+rowData(sce_be1)$gene_names <- rownames(sce_be1)
+#rowData(sce_be1)$gene_names
+```
+
+```{r}
+saveRDS(sce_be1, file = "~/datasets/BE1/BE1_sce.RDS")
+sce_be1 <- readRDS("~/datasets/BE1/BE1_sce.RDS")
+
+sce_be1[,sce_be1$is_train=="TRUE"] |>
+  saveRDS("~/datasets/BE1/train_BE1_sce.RDS")
+sce_be1[,sce_be1$is_train=="FALSE"] |>
+  saveRDS("~/datasets/BE1/test_BE1_sce.RDS")
+```
+
+# Diagnostic plots
+
+```{r}
+plotColData(sce_be1, y = "sum", colour_by = "discard") + ggtitle("Total count")
+plotColData(sce_be1, y = "sum", x = "Sample", colour_by = "discard") + ggtitle("Total count per sample")
+```
+
+```{r}
+plotColData(sce_be1, y = "detected", colour_by = "discard") + ggtitle("Detected features")
+plotColData(sce_be1, y = "detected", x = "Sample", colour_by = "discard") + ggtitle("Detected features per sample")
+```
+
+```{r}
+plotColData(sce_be1, y = "subsets_Mito_percent", colour_by = "discard") + ggtitle("Mito percent")
+plotColData(sce_be1, y = "subsets_Mito_percent", x = "Sample", colour_by = "discard") + ggtitle("Mito percent per sample")
+```
+
+```{r}
+plotColData(sce_be1, x="sum", y="subsets_Mito_percent", colour_by="discard")
+plotColData(sce_be1, x="detected", y="subsets_Mito_percent", colour_by="discard")
+```
+
