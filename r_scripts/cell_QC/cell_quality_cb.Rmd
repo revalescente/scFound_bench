@@ -1,0 +1,35 @@
+---
+title: "cell_quality_cb"
+author: "Valerio Reffo"
+date: "2026-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+#devtools::install_github("powellgenomicslab/DropletQC", build_vignettes = FALSE)
+library(DropletQC)
+```
+
+```{r}
+nf <- nuclear_fraction_annotation(
+  annotation_path = "~/ref/refdata-cellranger-hg19-3.0.0/genes/genes.gtf", 
+  bam = "~/cite_seq_coord_blood_raw_data/SRR5808750/STARsolo_output/Aligned.sortedByCoord.out.bam",
+  barcodes = "~/cite_seq_coord_blood_raw_data/SRR5808750/STARsolo_output/Solo.out/Gene/raw/barcodes.tsv",
+  tiles = 1, 
+  cores = 4, 
+  verbose = TRUE
+)
+```
+
+```{r}
+class(nf)
+str(nf)
+summary(nf$nuclear_fraction)
+```
+
