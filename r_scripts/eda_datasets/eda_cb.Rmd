@@ -21,7 +21,7 @@ library(EnsDb.Hsapiens.v75)
 ```
 
 ```{r}
-sce_cb <- readRDS("~/datasets/cord_blood/cord_blood_sce.RDS")
+sce_cb <- readRDS("/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_sce.RDS")
 ```
 
 #### 1. find mithocondial genes  ####

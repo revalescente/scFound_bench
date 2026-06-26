@@ -36,3 +36,11 @@ venv/
 .Rapp.history
 .Rproj.user/
 *.Rproj
+.Rproj.user
+.positai
+
+# Folder
+results/
+outputs/
+logs/
+.ipynb_checkpoints/
