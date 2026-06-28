@@ -2,10 +2,10 @@ library(DropletQC)
 
 # 1. Definisci i percorsi
 gtf_path  <- "/projects/shared/intronic_bam/ref/ref/refdata-cellranger-hg19-3.0.0/genes/genes.gtf"
-bam_path  <- "/projects/shared/intronic_bam/cite_seq_coord_blood/starsolo_out/SRR5808750/Aligned.sortedByCoord.out.bam"
+bam_path  <- "/projects/shared/intronic_bam/cite_seq_coord_blood/starsolo_out/master_combined.bam"
 cb_path   <- "/projects/shared/intronic_bam/cite_seq_coord_blood/starsolo_out/SRR5808750/Solo.out/Gene/raw/barcodes.tsv"
 out_dir   <- "~/scFound_bench/results"
-out_file  <- file.path(out_dir, "nf_onesample.rds")
+out_file  <- file.path(out_dir, "nf_cordblood.rds")
 
 # 2. Controllo difensivo: crea la cartella di output se non esiste
 if (!dir.exists(out_dir)) {

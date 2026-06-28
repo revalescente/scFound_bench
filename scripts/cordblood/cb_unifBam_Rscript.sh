@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=11
 #SBATCH --mem=80G
 #SBATCH --time=02-00:00:00
-#SBATCH --output=home/%u/scFound_bench/outputs/qc-%A.out
-#SBATCH --error=home/%u/scFound_bench/logs/qc-%A.err
+#SBATCH --output=/home/vreffo/scFound_bench/outputs/qc-%A.out
+#SBATCH --error=/home/vreffo/scFound_bench/logs/qc-%A.err
 
 set -euo pipefail
 

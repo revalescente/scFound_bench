@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
-#SBATCH --output=home/%u/scFound_bench/outputs/download-%A.out
-#SBATCH --error=home/%u/scFound_bench/logs/download-%A.err
+#SBATCH --output=/home/vreffo/scFound_bench/outputs/download-%A_%a.out
+#SBATCH --error=/home/vreffo/scFound_bench/logs/download-%A_%a.err
 
 set -euo pipefail
 
@@ -48,7 +48,7 @@ export NCBI_SETTINGS=" "
 echo ">>> Avvio del download di ${SRR_ID}.sra..."
 
 # Usiamo l'opzione --output-directory per forzare il download dentro $TARGET_DIR
-prefetch --output-directory "$TARGET_DIR" "$SRR_ID"
+prefetch --max-size 50G --output-directory "$TARGET_DIR" "$SRR_ID"
 
 # Alcune versioni di prefetch creano una struttura sottocartelle del tipo: TARGET_DIR/SRR_ID/SRR_ID.sra
 # Spostiamo il file direttamente in TARGET_DIR se necessario per uniformarlo ai tuoi script precedenti

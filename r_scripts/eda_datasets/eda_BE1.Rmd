@@ -21,7 +21,7 @@ library(EnsDb.Hsapiens.v75)
 ```
 
 ```{r}
-sce_be1 <- readRDS("~/datasets/BE1/BE1_sce.RDS")
+sce_be1 <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
 ```
 
 
