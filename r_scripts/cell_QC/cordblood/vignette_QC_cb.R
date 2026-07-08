@@ -37,7 +37,8 @@ table(sce_cb$celltype)
 # Distribution of nuclear fraction per cell type
 p <- ggplot(as.data.frame(colData(sce_cb)), aes(x=nuclear_fraction_QC))
 p + geom_density() +
-  facet_wrap(~celltype)
+  facet_wrap(~celltype) +
+  labs(title = "Distribution of nuclear fraction for each cell type - Cord Blood dataset")
 
 # Distribution of UMI counts per 
 p <- p + aes(y=log10(sum)) +
@@ -63,9 +64,9 @@ table(cb_ed$cell_status)
 # it can be instructive to visualise where the cut-off has been drawn:
 
 cb_ed <- identify_empty_drops(nf_umi=nf_umi, include_plot = TRUE)
-
 # Useful parameters: nf_rescue = 0.05 (default), umi_rescue = 1000 (default, log10 = 3)
 
+table(cb_ed$celltype, cb_ed$cell_status) # tutte natural killers (?)
 
 # add reduced dims
 sce_cb <- logNormCounts(sce_cb)
@@ -76,12 +77,41 @@ sce_cb <- runPCA(sce_cb, subset_row = hvgs, ncomponents = 50)
 sce_cb <- runUMAP(sce_cb, dimred = "PCA")
 sce_cb
 
-plotUMAP(sce_cb, colour_by = "celltype")
-plotPCA(sce_cb, colour_by = "celltype")
+umapp <- plotUMAP(sce_cb, colour_by = "celltype")
+pcap <- plotPCA(sce_cb, colour_by = "celltype")
+
+umapb <- plotUMAP(sce_cb, colour_by = "nuclear_fraction_QC")
+pcab <- plotPCA(sce_cb, colour_by = "nuclear_fraction_QC")
+
+pcap | pcab
+umapp | umapb
+
+# check MALAT1 and nuclear fraction relationship ----
+# Non c'è MALAT1
+umapm <- plotUMAP(sce_cb, colour_by = "MALAT1")
+pcam <- plotPCA(sce_cb, colour_by = "MALAT1")
+
+pcab | pcam
+umapb | umapm
+
+# scatterplot 
+plotExpression(sce_cb, 
+               features = "MALAT1", 
+               x = "nuclear_fraction_QC", 
+               other_fields = "celltype",
+               exprs_values = "logcounts") +
+  facet_wrap(~Sample) +                   # <--- Divide il grafico in pannelli per ogni Sample
+  aes(color = Sample) +                   # (Opzionale) Colora i punti in base al Sample
+  theme_minimal() +
+  labs(title = "MALAT1 vs Nuclear Fraction per cell type",
+       y = "Espressione di MALAT1 (logcounts)")
+
 
 # identify damaged cells
 cb_ed$celltype <- sce_cb$celltype
 cb_ed_dc <- identify_damaged_cells(cb_ed, verbose = FALSE, output_plots = TRUE)
-table(cb_ed_dc[[1]]$cell_status)
+table(cb_ed_dc[[1]]$celltype, cb_ed_dc[[1]]$cell_status)
 
-wrap_plots(cb_ed_dc[[2]], nrow = 8)
+cb_ed_dc$plots$`Natural Killers`
+
+saveRDS(sce_cb, "/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_sce.RDS")

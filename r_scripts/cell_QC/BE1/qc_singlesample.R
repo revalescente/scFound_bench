@@ -20,7 +20,7 @@ cat(" 🚀 ANALISI DROPQC TRAMITE CELLRANGER TAGS:", sample, "\n")
 cat("==================================================\n")
 
 # 3. Definisci i percorsi specifici per questo campione
-sample_dir   <- file.path(multi_out, "per_sample_outs", sample, "count")
+sample_dir   <- file.path(multi_out, "per_sample_outs", sample)
 bam_path     <- file.path(sample_dir, "sample_alignments.bam")
 barcode_path <- file.path(sample_dir, "sample_filtered_feature_bc_matrix", "barcodes.tsv.gz")
 out_file     <- file.path(out_dir, paste0("nf_BE1_", sample, ".rds"))

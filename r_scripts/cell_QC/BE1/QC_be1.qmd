@@ -1,0 +1,248 @@
+---
+title: "BE1 dataset quality control using DropletQC"
+author: "Valerio Reffo"
+date: 30-06-2026
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup-libraries
+
+library(DropletQC)
+library(purrr)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(scuttle)
+library(scran)
+library(scater)
+```
+
+## Data Loading and Nuclear Fraction Integration
+
+We define the sample IDs and import the RDS files containing the nuclear fraction calculated for each individual sample, then map them back to the main `SingleCellExperiment` object.
+
+```{r}
+#| label: load-nf
+#| eval: false
+#| include: false
+
+samples <- c("A549", "CCL-185-IG", "PC9", "CRL5868", "HTB178", "DV90", "HCC78", "PBMCs")
+
+# 1. Load the list of nuclear fractions
+nf_list <- imap(samples, \(sample, name) {
+  s_path <- paste0("~/scFound_bench/results/nf_BE1_", sample, ".rds")
+  readRDS(s_path)
+})
+names(nf_list) <- samples
+```
+
+
+```{r}
+#| label: load-sce
+# 2. Load the main SCE object
+sce_be1 <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
+sce_be1
+```
+
+### Mapping Nuclear Fraction to `colData`
+
+We merge the individual nuclear fraction data frames into a single object, ensuring that the constructed cell keys perfectly match the `colnames` of our SCE object.
+
+```{r}
+#| label: merge-nuclear-fraction
+#| eval: false
+#| include: false
+
+# Combine the list into a single data frame
+nf_combined <- do.call(rbind, lapply(names(nf_list), function(s) {
+  df <- as.data.frame(nf_list[[s]])
+  # Create a cell key identical to sce_be1 colnames (e.g., "AAACCCAAGCCTATCA-1_A549")
+  df$cell_key <- paste0(rownames(df), "_", s)
+  return(df)
+}))
+
+# Safe mapping using match()
+colData(sce_be1)$nuclear_fraction <- nf_combined$nuclear_fraction[match(colnames(sce_be1), nf_combined$cell_key)]
+
+# Verify the integration
+head(colData(sce_be1)[, c("Sample", "Barcode", "nuclear_fraction")])
+table(sce_be1$Sample)
+```
+
+---
+
+## Exploratory Analysis
+
+We visualize the distribution of the nuclear fraction across different samples and explore its relationship with total UMI counts to identify potential ambient background or empty droplets.
+
+```{r}
+#| label: plot-distributions
+#| fig-width: 10
+#| fig-height: 6
+
+# Nuclear fraction distribution by sample identity
+p <- ggplot(as.data.frame(colData(sce_be1)), aes(x = nuclear_fraction))
+
+p + geom_density(fill = "lightblue", alpha = 0.5) +
+  facet_wrap(~Sample) +
+  theme_minimal() +
+  labs(title = "Distribution of Nuclear Fraction - BE1 Dataset by Cell Identity",
+       x = "Nuclear Fraction")
+
+# UMI counts vs Nuclear Fraction distribution
+p + aes(y = log10(sum), colour = Sample) +
+  geom_point(alpha = 0.4, size = 0.6) +
+  theme_minimal() +
+  labs(title = "UMI Counts vs Nuclear Fraction", 
+       x = "Nuclear Fraction",
+       y = "log10(UMI Sum)")
+```
+
+---
+
+## Normalization and Dimensionality Reduction
+
+We perform log-transformation on the counts, select the Top 10% Highly Variable Genes (HVGs), and compute PCA and UMAP coordinates.
+
+```{r}
+#| label: dimensionality-reduction
+
+sce_be1 <- logNormCounts(sce_be1)
+dec <- modelGeneVar(sce_be1)
+hvgs <- getTopHVGs(dec, prop = 0.1)
+
+sce_be1 <- runPCA(sce_be1, subset_row = hvgs, ncomponents = 50)
+sce_be1 <- runUMAP(sce_be1, dimred = "PCA")
+sce_be1
+```
+
+### Visualizing Embeddings (PCA vs UMAP)
+
+We compare the embedding spaces side-by-side, coloring cells by Sample and Nuclear Fraction using `patchwork`.
+
+```{r}
+#| label: plot-dimred
+#| fig-width: 12
+#| fig-height: 10
+
+umapp <- plotUMAP(sce_be1, colour_by = "Sample") + theme(legend.position = "bottom")
+pcap  <- plotPCA(sce_be1, colour_by = "Sample") + theme(legend.position = "none")
+
+umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction") + theme(legend.position = "bottom")
+pcab  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") + theme(legend.position = "none")
+
+# Composite layout
+(pcap | pcab) / (umapp | umapb)
+```
+
+---
+
+## Focus on MALAT1 and Nuclear Fraction Relationship
+
+We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** to biologically validate our nuclear fraction metric.
+
+```{r}
+#| label: malat1-analysis
+#| fig-width: 12
+#| fig-height: 5
+
+umapm <- plotUMAP(sce_be1, colour_by = "MALAT1")
+pcam  <- plotPCA(sce_be1, colour_by = "MALAT1")
+
+# Direct comparison in reduced dimensions
+umapb | umapm
+```
+
+### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Sample
+
+```{r}
+#| label: scatter-malat1-nf
+#| fig-width: 12
+#| fig-height: 6
+
+plotExpression(sce_be1, 
+               features = "MALAT1", 
+               x = "nuclear_fraction", 
+               other_fields = "Sample",
+               exprs_values = "logcounts") +
+  facet_wrap(~Sample) + 
+  aes(color = Sample) + 
+  theme_minimal() +
+  labs(title = "MALAT1 Expression vs Nuclear Fraction per Sample",
+       x = "Nuclear Fraction",
+       y = "MALAT1 Expression (logcounts)")
+```
+
+---
+
+### Detecting Empty Droplets and Damaged cells with `DropletQC`
+
+We prepare the data frame for the `DropletQC` algorithm by handling missing values (`NA`) and evaluating the empty droplet cutoff.
+
+```{r}
+#| label: empty-droplets
+#| fig-width: 8
+#| fig-height: 6
+
+nf_umi <- data.frame(
+  nf = sce_be1$nuclear_fraction,
+  umi = sce_be1$sum,
+  Sample = sce_be1$Sample
+)
+
+# Handle NA values
+nf_umi <- nf_umi[!is.na(nf_umi$nf),]
+
+# Identify empty droplets and output the diagnostic plot
+cb_be1 <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
+```
+
+
+```{r}
+# Summary table of cell status
+table(cb_be1$cell_status)
+```
+
+### Damaged Cell Identification
+
+Finally, we identify damaged cells by leveraging cell type annotations and save the finalized object.
+
+```{r}
+#| label: damaged-cells
+#| fig-width: 10
+#| fig-height: 12
+
+# Reorder columns
+cb_be1 <- cb_be1 |>  
+  relocate(Sample, .after = cell_status)
+
+# Identify damaged cells using DropletQC
+cb_be1_dc <- identify_damaged_cells(cb_be1, verbose = FALSE, output_plots = TRUE)
+
+# Final cell status summary
+table(cb_be1_dc[[1]]$cell_status)
+
+# Diagnostic plots for each cell identity group
+wrap_plots(cb_be1_dc[[2]], nrow = 6)
+```
+
+### Saving the Updated SCE Object
+
+```{r}
+#| label: save-object
+#| eval: false
+#| include: false
+
+saveRDS(sce_be1, file = "/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
+```
+

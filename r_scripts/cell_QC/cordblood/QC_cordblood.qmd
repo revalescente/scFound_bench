@@ -1,0 +1,268 @@
+---
+title: "Cord Blood Quality Control with DropletQC"
+author: "Valerio Reffo"
+date: 30-06-2026
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup-libraries
+
+library(DropletQC)
+library(purrr)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(scuttle)
+library(scran)
+library(scater)
+```
+
+## Data Loading and Initial Per-Cell QC
+
+We load the calculated nuclear fraction data along with the main Cord Blood `SingleCellExperiment` object. We also calculate standard mitochondrial QC metrics.
+
+```{r}
+#| label: load-data
+#| eval: false
+#| include: false
+
+# Load nuclear fraction and main SCE object
+nf <- readRDS("~/scFound_bench/results/nf_cordblood.rds")
+```
+
+
+```{r}
+#| label: load-sce
+
+sce_cb <- readRDS("/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_sce.RDS")
+sce_cb
+```
+
+### Mitochondrial Metrics Calculation
+
+We identify mitochondrial genes based on the `MT-` prefix to compute per-cell quality control metrics.
+
+```{r}
+#| label: mito-qc
+#| eval: false
+#| include: false
+
+# Identify mitochondrial genes based on rownames
+is_mito <- grepl("^MT-", rownames(sce_cb), ignore.case = TRUE)
+summary(is_mito) # Verification of detected mitochondrial genes
+
+# Automatically calculate and append QC metrics to colData
+sce_cb <- addPerCellQC(sce_cb, subsets = list(Mito = is_mito))
+```
+
+---
+
+## Aligning and Integrating Nuclear Fraction
+
+Before adding the nuclear fraction to the SCE object, we examine its global distribution and accurately filter it to match the exact barcodes present in our filtered dataset.
+
+```{r}
+#| label: integrate-nuclear-fraction
+#| eval: false
+#| fig-height: 5
+#| fig-width: 12
+#| include: false
+
+# Check original dimensions and distribution
+dim(nf)
+hist(nf$nuclear_fraction, main = "Original Nuclear Fraction Distribution", xlab = "Nuclear Fraction")
+
+# Extract rows corresponding only to valid cell barcodes
+nf_filtered <- nf[colnames(sce_cb), , drop = FALSE]
+hist(nf_filtered$nuclear_fraction, main = "Filtered Nuclear Fraction Distribution", xlab = "Nuclear Fraction")
+
+# Append the filtered nuclear fraction to colData
+sce_cb$nuclear_fraction_QC <- nf_filtered$nuclear_fraction
+```
+
+
+```{r}
+#| label: cell-table
+
+# Review cell type composition
+table(sce_cb$celltype)
+```
+
+---
+
+## Exploratory Analysis and Distributions
+
+We visualize the distribution of the nuclear fraction across different cell types and evaluate its relationship with total UMI counts.
+
+```{r}
+#| label: plot-distributions
+#| fig-width: 10
+#| fig-height: 6
+
+# Distribution of nuclear fraction per cell type
+p <- ggplot(as.data.frame(colData(sce_cb)), aes(x = nuclear_fraction_QC))
+
+p + geom_density(fill = "lightgreen", alpha = 0.5) +
+  facet_wrap(~celltype) +
+  theme_minimal() +
+  labs(title = "Distribution of Nuclear Fraction for Each Cell Type - Cord Blood Dataset",
+       x = "Nuclear Fraction (QC)")
+
+# Distribution of UMI counts mapped over the cell types
+p + aes(y = log10(sum), colour = celltype) +
+  geom_point(alpha = 0.7, size = 0.8) +
+  theme_minimal() +
+  labs(title = "UMI Counts vs Nuclear Fraction by Cell Type",
+       x = "Nuclear Fraction (QC)",
+       y = "log10(UMI Sum)")
+
+```
+
+---
+
+## Normalization and Dimensionality Reduction
+
+We perform log-normalization, model the gene variance to select the Top 10% highly variable genes (HVGs), and generate PCA and UMAP embeddings.
+
+```{r}
+#| label: dimensionality-reduction
+
+sce_cb <- logNormCounts(sce_cb)
+dec <- modelGeneVar(sce_cb)
+hvgs <- getTopHVGs(dec, prop = 0.1)
+
+sce_cb <- runPCA(sce_cb, subset_row = hvgs, ncomponents = 50)
+sce_cb <- runUMAP(sce_cb, dimred = "PCA")
+sce_cb
+```
+
+### Embedding Visualization (PCA vs UMAP)
+
+We display the low-dimensional spaces colored by cell type and by our updated nuclear fraction metric.
+
+```{r}
+#| label: plot-embeddings
+#| fig-width: 12
+#| fig-height: 10
+
+umapp <- plotUMAP(sce_cb, colour_by = "celltype") + theme(legend.position = "bottom")
+pcap  <- plotPCA(sce_cb, colour_by = "celltype") + theme(legend.position = "none")
+
+umapb <- plotUMAP(sce_cb, colour_by = "nuclear_fraction_QC") + theme(legend.position = "bottom")
+pcab  <- plotPCA(sce_cb, colour_by = "nuclear_fraction_QC") + theme(legend.position = "none")
+
+# Layout orchestration
+(pcap | pcab) / (umapp | umapb)
+```
+
+---
+
+## Investigating MALAT1 and Nuclear Fraction Relationship
+
+MALAT1 is absent in cordblood
+
+```{r}
+#| label: malat1-plots
+#| eval: false
+#| fig-height: 5
+#| fig-width: 12
+#| include: false
+
+# Check feature expression on UMAP and PCA
+umapm <- plotUMAP(sce_cb, colour_by = "MALAT1")
+pcam  <- plotPCA(sce_cb, colour_by = "MALAT1")
+
+# Side-by-side comparison with nuclear fraction
+pcab | pcam
+umapb | umapm
+```
+
+### MALAT1 vs Nuclear Fraction Scatter Plot
+
+```{r}
+#| label: scatter-malat1
+#| eval: false
+#| fig-height: 6
+#| fig-width: 12
+#| include: false
+
+plotExpression(sce_cb, 
+               features = "MALAT1", 
+               x = "nuclear_fraction_QC", 
+               other_fields = "celltype",
+               exprs_values = "logcounts") +
+  facet_wrap(~celltype) + 
+  aes(color = celltype) + 
+  theme_minimal() +
+  labs(title = "MALAT1 vs Nuclear Fraction per Cell Type",
+       x = "Nuclear Fraction (QC)",
+       y = "MALAT1 Expression (logcounts)")
+```
+
+---
+
+## Empty Droplet and Damaged Cell Identification
+
+Using `DropletQC`, we extract the nuclear fraction and total UMI counts to identify and flag potential empty droplets.
+
+```{r}
+#| label: empty-droplets
+#| fig-width: 8
+#| fig-height: 6
+
+# Prepare the input data frame
+nf_umi <- data.frame(
+  nf = sce_cb$nuclear_fraction_QC,
+  umi = sce_cb$sum
+)
+
+# Re-run to generate diagnostic plots and visualize the threshold cut-offs
+cb_ed <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
+```
+
+## Damaged Cell Identification
+
+Using the cell type annotations, we call `identify_damaged_cells` to pinpoint cell structural damage or lysis, inspect the targeted cell populations, and save the finalized dataset.
+
+```{r}
+#| label: damaged-cells
+#| fig-width: 8
+#| fig-height: 6
+
+# Synchronize cell type metadata
+cb_ed$celltype <- sce_cb$celltype
+
+# Detect damaged cell populations
+cb_ed_dc <- identify_damaged_cells(cb_ed, verbose = FALSE, output_plots = TRUE)
+```
+
+
+```{r}
+#| label: detail-damaged-cells
+
+# Show classification output across cell types
+table(cb_ed_dc[[1]]$celltype, cb_ed_dc[[1]]$cell_status)
+
+# Display diagnostic QC plot for the Natural Killers group
+cb_ed_dc$plots$`Natural Killers`
+```
+
+### Exporting the Finalized Object
+
+```{r}
+#| label: save-dataset
+#| eval: false
+#| include: false
+
+saveRDS(sce_cb, "/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_sce.RDS")
+```
