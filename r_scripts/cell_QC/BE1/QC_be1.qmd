@@ -16,6 +16,8 @@ execute:
 
 ```{r}
 #| label: setup-libraries
+#| message: false
+#| warning: false
 
 library(DropletQC)
 library(purrr)
@@ -25,6 +27,8 @@ library(dplyr)
 library(scuttle)
 library(scran)
 library(scater)
+library(anndataR)
+library(SingleCellExperiment)
 ```
 
 ## Data Loading and Nuclear Fraction Integration
@@ -52,6 +56,18 @@ names(nf_list) <- samples
 # 2. Load the main SCE object
 sce_be1 <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
 sce_be1
+```
+
+Let's read the anndata with the embeddings matrix
+```{r}
+be_ann <- read_h5ad("/projects/shared/intronic_bam/datasets/anndata/be1_scGPT_embeddings.h5ad")
+```
+
+Add it into the reducedDim slot of the sce
+```{r}
+scgpt_matrix <- as.matrix(be_ann$obsm['X_scGPT']$X_scGPT)
+scgpt_matrix_aligned <- scgpt_matrix[colnames(sce_be1), ]
+reducedDim(sce_be1, "scGPT") <- scgpt_matrix_aligned
 ```
 
 ### Mapping Nuclear Fraction to `colData`
@@ -116,6 +132,7 @@ We perform log-transformation on the counts, select the Top 10% Highly Variable 
 
 ```{r}
 #| label: dimensionality-reduction
+#| eval: false
 
 sce_be1 <- logNormCounts(sce_be1)
 dec <- modelGeneVar(sce_be1)
@@ -126,6 +143,16 @@ sce_be1 <- runUMAP(sce_be1, dimred = "PCA")
 sce_be1
 ```
 
+Let's calculate the UMAP on the embeddings too
+
+```{r}
+#| label: embed-umap
+#| eval: false
+
+sce_be1 <- runUMAP(sce_be1, dimred = "scGPT", name = "UMAP_embed")
+```
+
+
 ### Visualizing Embeddings (PCA vs UMAP)
 
 We compare the embedding spaces side-by-side, coloring cells by Sample and Nuclear Fraction using `patchwork`.
@@ -135,14 +162,20 @@ We compare the embedding spaces side-by-side, coloring cells by Sample and Nucle
 #| fig-width: 12
 #| fig-height: 10
 
-umapp <- plotUMAP(sce_be1, colour_by = "Sample") + theme(legend.position = "bottom")
+umapp <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") + theme(legend.position = "bottom")
 pcap  <- plotPCA(sce_be1, colour_by = "Sample") + theme(legend.position = "none")
 
-umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction") + theme(legend.position = "bottom")
+umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP") + theme(legend.position = "bottom")
 pcab  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") + theme(legend.position = "none")
 
+umapes <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_embed") + theme(legend.position = "bottom")
+umape <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + theme(legend.position = "bottom")
+
 # Composite layout
-(pcap | pcab) / (umapp | umapb)
+(pcap | pcab ) / (umapp | umapb )
+
+(umapes | umape )
+
 ```
 
 ---
@@ -156,11 +189,14 @@ We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** 
 #| fig-width: 12
 #| fig-height: 5
 
-umapm <- plotUMAP(sce_be1, colour_by = "MALAT1")
-pcam  <- plotPCA(sce_be1, colour_by = "MALAT1")
+umapm <- plotUMAP(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom")
+pcam  <- plotPCA(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom")
+umapem <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom")
 
 # Direct comparison in reduced dimensions
-umapb | umapm
+umapb | umapm 
+
+umape | umapem
 ```
 
 ### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Sample

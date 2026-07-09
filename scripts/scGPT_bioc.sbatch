@@ -20,7 +20,8 @@ echo "Starting Jupyter with scGPT environment"
 
 # Load the required environment
 module purge
-module load micromamba/scGPT
+module load micromamba
+module load cuda
+#module load micromamba/scGPT
 
-# Start Jupyter on the compute node
-jupyter lab --no-browser --ip 0.0.0.0 --port 8877
+micromamba run -n nw-scGPTv2 jupyter lab --no-browser --ip 0.0.0.0 --port 8877
