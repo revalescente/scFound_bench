@@ -16,6 +16,8 @@ execute:
 
 ```{r}
 #| label: setup-libraries
+#| message: false
+#| warning: false
 
 library(DropletQC)
 library(purrr)
@@ -25,6 +27,8 @@ library(dplyr)
 library(scuttle)
 library(scran)
 library(scater)
+library(anndataR)
+library(SingleCellExperiment)
 ```
 
 ## Data Loading and Nuclear Fraction Calculation
@@ -39,6 +43,26 @@ sc_mix <- readRDS("/projects/shared/intronic_bam/datasets/sc_mixology/sc_mix.RDS
 sc_mix
 ```
 
+Let's read the anndata with the embeddings matrix
+```{r}
+#| label: anndata-read
+#| eval: false
+
+# Path automatically adapted for sc_mixology
+mix_ann <- read_h5ad("/projects/shared/intronic_bam/datasets/anndata/mix_scGPT_embeddings.h5ad")
+mix_ann
+```
+
+Add it into the reducedDim slot of the sce
+```{r}
+#| label: embeddings-add
+#| eval: false
+
+scgpt_matrix <- as.matrix(mix_ann$obsm['X_scGPT']$X_scGPT)
+scgpt_matrix_aligned <- scgpt_matrix[colnames(sc_mix), ]
+reducedDim(sc_mix, "scGPT") <- scgpt_matrix_aligned
+```
+
 ### Exonic Fraction Processing and Metric Annotation
 
 We inspect the global exonic mapping proportions and compute the true total sequenced reads per cell to accurately derive the nuclear fraction metric.
@@ -46,7 +70,7 @@ We inspect the global exonic mapping proportions and compute the true total sequ
 ```{r}
 #| label: calculate-nuclear-fraction
 #| eval: false
-#| include: false
+
 
 # Inspect baseline exonic metrics
 hist(prop.table(sc_mix$mapped_to_exon))
@@ -105,7 +129,7 @@ We perform log-transformation normalization on the raw counts, model features to
 ```{r}
 #| label: dimensionality-reduction
 #| eval: false
-#| include: false
+
 
 sc_mix <- logNormCounts(sc_mix)
 dec <- modelGeneVar(sc_mix)
@@ -114,6 +138,14 @@ hvgs <- getTopHVGs(dec, prop = 0.1)
 sc_mix <- runPCA(sc_mix, subset_row = hvgs, ncomponents = 50)
 sc_mix <- runUMAP(sc_mix, dimred = "PCA")
 sc_mix
+```
+
+Let's calculate the UMAP on the embeddings too
+```{r}
+#| label: embed-umap
+#| eval: false
+
+sc_mix <- runUMAP(sc_mix, dimred = "scGPT", name = "UMAP_embed")
 ```
 
 ### Visualizing Embeddings (PCA vs UMAP)
@@ -125,14 +157,91 @@ We display the low-dimensional projection spaces side-by-side, assessing separat
 #| fig-width: 12
 #| fig-height: 10
 
-umapp <- plotUMAP(sc_mix, colour_by = "cell_line") + theme(legend.position = "bottom")
-pcap  <- plotPCA(sc_mix, colour_by = "cell_line") + theme(legend.position = "none")
+# Cell identity
+umapp <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP") + 
+  theme(legend.position = "bottom") + 
+  labs(title = "UMAP (PCA) colored by cell identity")
+pcap  <- plotPCA(sc_mix, colour_by = "cell_line") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by cell identity")
 
-umapb <- plotUMAP(sc_mix, colour_by = "nuclear_fraction") + theme(legend.position = "bottom")
-pcab  <- plotPCA(sc_mix, colour_by = "nuclear_fraction") + theme(legend.position = "none")
+# Nuclear Fraction
+umapb <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (PCA) colored by nuclear fraction")
+pcab  <- plotPCA(sc_mix, colour_by = "nuclear_fraction") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by nuclear fraction")
+
+# Umap embeddings
+umapes <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by cell identity")
+umape <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by nuclear fraction")
 
 # Composite multi-panel layout
 (pcap | pcab) / (umapp | umapb)
+
+(umapes | umape)
+```
+
+---
+
+## Focus on MALAT1 and Nuclear Fraction Relationship
+
+We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** to biologically validate our nuclear fraction metric.
+
+```{r}
+#| label: malat1-analysis
+#| fig-width: 12
+#| fig-height: 5
+
+umapm <- plotUMAP(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+  labs(title = "UMAP (PCA) colored by MALAT1 log expression")
+pcam  <- plotPCA(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+  labs(title = "PCA colored by MALAT1 log expression")
+umapem <- plotUMAP(sc_mix, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by MALAT1")
+
+# Direct comparison in reduced dimensions
+pcam | umapem | umapm 
+```
+
+```{r}
+#| label: umap-embeds
+#| fig-width: 12
+#| fig-height: 5
+umape | umapem | umapes
+```
+
+```{r}
+#| label: umap-pca
+#| fig-width: 12
+#| fig-height: 5
+
+umapm | umapb | umapp
+```
+
+### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Cell Line
+
+```{r}
+#| label: scatter-malat1-nf
+#| fig-width: 12
+#| fig-height: 6
+
+plotExpression(sc_mix, 
+               features = "MALAT1", 
+               x = "nuclear_fraction", 
+               other_fields = "cell_line",
+               exprs_values = "logcounts") +
+  facet_wrap(~cell_line) + 
+  aes(color = cell_line) + 
+  theme_minimal() +
+  labs(title = "MALAT1 Expression vs Nuclear Fraction per Cell Line",
+       x = "Nuclear Fraction",
+       y = "MALAT1 Expression (logcounts)")
 ```
 
 ---
@@ -149,13 +258,74 @@ We compile the nuclear fraction values and total UMI counts into a structural da
 # Prepare the data structure for the empty droplet detection algorithm
 nf_umi <- data.frame(
   nf = sc_mix$nuclear_fraction,
-  umi = sc_mix$sum
+  umi = sc_mix$sum,
+  cell_line = sc_mix$cell_line
 )
 
+rownames(nf_umi) <- colnames(sc_mix)
+
+# Handle NA values
+nf_umi <- nf_umi[!is.na(nf_umi$nf),]
 
 # Evaluate call and output diagnostic empty droplet cut-off visualization
 cb_mix <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
 ```
+
+```{r}
+#| label: cell-status-prop
+# Summary table of cell status
+table(cb_mix$cell_status)
+```
+
+## Investigation of possible association between empty droplets, cell identity and MALAT1 gene
+
+Add the cell status column in the coldata of sc_mix
+
+```{r}
+#| label: cell_status-add
+#| eval: false
+sc_mix$cell_status <- cb_mix[colnames(sc_mix), "cell_status"]
+```
+
+```{r}
+table(sc_mix$cell_line, sc_mix$cell_status)
+```
+
+```{r}
+#| label: cell-status-boxplots
+#| fig-width: 14
+#| fig-height: 6
+
+p1 <- sc_mix[, !is.na(sc_mix$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = nuclear_fraction, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +  
+  facet_wrap(~ cell_line) +                           
+  theme_minimal() + 
+  labs(
+    title = "Nuclear fraction distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "Nuclear Fraction",
+    fill = "Status"
+  )
+
+p2 <- sc_mix[, !is.na(sc_mix$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = MALAT1, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +
+  facet_wrap(~ cell_line) +
+  theme_minimal() + 
+  labs(
+    title = "MALAT1 distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "MALAT1 logexpression",
+    fill = "Status"
+  )
+
+p1 | p2
+```
+
+---
 
 ### Damaged Cell Identification
 
@@ -166,14 +336,15 @@ We isolate cells suffering from experimental stress or cellular damage by aligni
 #| fig-width: 10
 #| fig-height: 12
 
-# Reorder metadata columns with dplyr relocate
-cb_mix$cell_line <- sc_mix$cell_line
+# Reorder metadata columns with dplyr relocate using cell_line
+cb_mix <- cb_mix |> 
+  relocate(cell_line, .after = cell_status)
 
 # Identify cell-damage status using DropletQC
 cb_mix_dc <- identify_damaged_cells(cb_mix, verbose = FALSE, output_plots = TRUE)
 
 # Show classification output cross-tabulated across the populations
-table(cb_mix_dc[[1]]$cell_line, cb_mix_dc[[1]]$cell_status)
+table(cb_mix_dc[[1]]$cell_status)
 
 # Generate multi-panel structural QC diagnostics plots
 wrap_plots(cb_mix_dc[[2]], nrow = 5)

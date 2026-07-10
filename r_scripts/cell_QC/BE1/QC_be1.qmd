@@ -38,7 +38,7 @@ We define the sample IDs and import the RDS files containing the nuclear fractio
 ```{r}
 #| label: load-nf
 #| eval: false
-#| include: false
+
 
 samples <- c("A549", "CCL-185-IG", "PC9", "CRL5868", "HTB178", "DV90", "HCC78", "PBMCs")
 
@@ -53,18 +53,24 @@ names(nf_list) <- samples
 
 ```{r}
 #| label: load-sce
-# 2. Load the main SCE object
+
 sce_be1 <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
 sce_be1
 ```
 
 Let's read the anndata with the embeddings matrix
 ```{r}
+#| label: anndata-read
+#| eval: false
+
 be_ann <- read_h5ad("/projects/shared/intronic_bam/datasets/anndata/be1_scGPT_embeddings.h5ad")
 ```
 
 Add it into the reducedDim slot of the sce
 ```{r}
+#| label: embeddings-add
+#| eval: false
+
 scgpt_matrix <- as.matrix(be_ann$obsm['X_scGPT']$X_scGPT)
 scgpt_matrix_aligned <- scgpt_matrix[colnames(sce_be1), ]
 reducedDim(sce_be1, "scGPT") <- scgpt_matrix_aligned
@@ -77,7 +83,6 @@ We merge the individual nuclear fraction data frames into a single object, ensur
 ```{r}
 #| label: merge-nuclear-fraction
 #| eval: false
-#| include: false
 
 # Combine the list into a single data frame
 nf_combined <- do.call(rbind, lapply(names(nf_list), function(s) {
@@ -162,14 +167,29 @@ We compare the embedding spaces side-by-side, coloring cells by Sample and Nucle
 #| fig-width: 12
 #| fig-height: 10
 
-umapp <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") + theme(legend.position = "bottom")
-pcap  <- plotPCA(sce_be1, colour_by = "Sample") + theme(legend.position = "none")
+# Cell identity
+umapp <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") + 
+  theme(legend.position = "bottom") + 
+  labs(title = "UMAP (PCA) colored by cell identity")
+pcap  <- plotPCA(sce_be1, colour_by = "Sample") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by cell identity")
 
-umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP") + theme(legend.position = "bottom")
-pcab  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") + theme(legend.position = "none")
+# Nuclear Fraction
+umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (PCA) colored by nuclear fraction")
+pcab  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by nuclear fraction")
 
-umapes <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_embed") + theme(legend.position = "bottom")
-umape <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + theme(legend.position = "bottom")
+# Umap embeddings
+umapes <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by cell identity")
+umape <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by nuclear fraction")
 
 # Composite layout
 (pcap | pcab ) / (umapp | umapb )
@@ -189,15 +209,25 @@ We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** 
 #| fig-width: 12
 #| fig-height: 5
 
-umapm <- plotUMAP(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom")
-pcam  <- plotPCA(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom")
-umapem <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom")
+umapm <- plotUMAP(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+  labs(title = "UMAP (PCA) colored by MALAT1 log expression")
+pcam  <- plotPCA(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+  labs(title = "PCA colored by MALAT1 log expression")
+umapem <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by MALAT1")
 
 # Direct comparison in reduced dimensions
-umapb | umapm 
-
-umape | umapem
+pcam | umapem | umapm 
 ```
+
+```{r}
+umape | umapem | umapes
+```
+
+```{r}
+umapm | umapb | umapp
+```
+
 
 ### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Sample
 
@@ -236,6 +266,8 @@ nf_umi <- data.frame(
   Sample = sce_be1$Sample
 )
 
+rownames(nf_umi) <- colnames(sce_be1)
+
 # Handle NA values
 nf_umi <- nf_umi[!is.na(nf_umi$nf),]
 
@@ -245,9 +277,58 @@ cb_be1 <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
 
 
 ```{r}
+#| label: cell-status-prop
 # Summary table of cell status
 table(cb_be1$cell_status)
 ```
+
+## Investigation of possible association between empty droplets, cellS identity and MALAT1 gene
+
+Add the cell status column in the coldata of sce_be1
+
+```{r}
+#| label: cell_status-add
+#| eval: false
+sce_be1$cell_status <- cb_be1[colnames(sce_be1), "cell_status"]
+```
+
+```{r}
+table(sce_be1$Sample, sce_be1$cell_status)
+```
+
+
+```{r}
+p1 <- sce_be1[, !is.na(sce_be1$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = nuclear_fraction, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +  # Disegna il boxplot
+  facet_wrap(~ Sample) +                           # Ora Sample è visibile!
+  theme_minimal() + 
+  labs(
+    title = "Nuclear fraction distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "Nuclear Fraction",
+    fill = "Status"
+  )
+
+p2 <- sce_be1[, !is.na(sce_be1$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = MALAT1, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +
+  facet_wrap(~ Sample) +
+  theme_minimal() + 
+  labs(
+    title = "MALAT1 distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "MALAT1 logexpression",
+    fill = "Status"
+  )
+
+p1 | p2
+```
+
+
+
 
 ### Damaged Cell Identification
 
@@ -277,7 +358,7 @@ wrap_plots(cb_be1_dc[[2]], nrow = 6)
 ```{r}
 #| label: save-object
 #| eval: false
-#| include: false
+
 
 saveRDS(sce_be1, file = "/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
 ```

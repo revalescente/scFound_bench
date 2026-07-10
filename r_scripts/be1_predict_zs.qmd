@@ -1,0 +1,144 @@
+---
+title: "Zero Shot prediction BE1"
+author: "Valerio Reffo"
+date: 30-06-2026
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r}
+library(SingleCellExperiment)
+library(FNN)
+library(pheatmap)
+```
+
+```{r}
+run_cell_type_prediction <- function(sce, embed_name, cell_type_key = "Sample", kappa = 10) {
+  
+  cat("\n--- Esecuzione predizione con embedding:", embed_name, "---\n")
+  
+  # 1. Separazione in Query (Test) e Reference (Train)
+  is_ref <- colData(sce)$is_train == TRUE
+  is_query <- colData(sce)$is_train == FALSE
+  
+  # Estrazione degli embeddings dedicati
+  ref_embed <- reducedDim(sce, embed_name)[is_ref, ]
+  query_embed <- reducedDim(sce, embed_name)[is_query, ]
+  
+  # Estrazione delle annotazioni (Ground Truth per il reference)
+  ref_labels <- colData(sce)[[cell_type_key]][is_ref]
+  query_labels <- colData(sce)[[cell_type_key]][is_query]
+  
+  # 2. Ricerca dei Kappa-Vicini più prossimi (L2 Distance)
+  # get.knnx usa di default la distanza Euclidea (L2), replicando FAISS FlatL2
+  knn_search <- FNN::get.knnx(data = ref_embed, query = query_embed, k = kappa)
+  nn_indices <- knn_search$nn.index # Matrice con gli indici dei vicini
+  
+  # 3. Maggioranza dei voti (Majority Voting)
+  preds <- apply(nn_indices, 1, function(row_idx) {
+    neighbor_labels <- ref_labels[row_idx]
+    lbl_table <- table(neighbor_labels)
+    # Ritorna il tipo cellulare più frequente (in caso di pareggio prende il primo)
+    names(lbl_table)[which.max(lbl_table)]
+  })
+  
+  # 4. Calcolo delle Metriche (Macro-averaged come in scikit-learn)
+  actual <- as.character(query_labels)
+  unique_classes <- unique(actual)
+  
+  # Accuratezza Globale
+  accuracy <- sum(preds == actual) / length(actual)
+  
+  # Calcolo manuale di Precision, Recall e F1 per classe (Macro)
+  precisions <- numeric(length(unique_classes))
+  recalls <- numeric(length(unique_classes))
+  f1s <- numeric(length(unique_classes))
+  
+  for (i in seq_along(unique_classes)) {
+    cl <- unique_classes[i]
+    tp <- sum(preds == cl & actual == cl)
+    fp <- sum(preds == cl & actual != cl)
+    fn <- sum(preds != cl & actual == cl)
+    
+    precisions[i] <- if ((tp + fp) == 0) 0 else tp / (tp + fp)
+    recalls[i]    <- if ((tp + fn) == 0) 0 else tp / (tp + fn)
+    f1s[i]        <- if ((precisions[i] + recalls[i]) == 0) 0 else 2 * (precisions[i] * recalls[i]) / (precisions[i] + recalls[i])
+  }
+  
+  res_dict <- list(
+    accuracy  = accuracy,
+    precision = mean(precisions),
+    recall    = mean(recalls),
+    macro_f1  = mean(f1s)
+  )
+  
+  print(data.frame(Metric = names(res_dict), Value = unlist(res_dict), row.names = NULL))
+  
+  # 5. Matrice di Confusione Normalizzata per riga (True Label)
+  cm <- table(Actual = actual, Predicted = preds)
+  
+  # Assicuriamoci che la matrice sia quadrata includendo tutte le classi presenti
+  all_classes <- sort(unique(c(actual, preds)))
+  cm_square <- matrix(0, nrow = length(all_classes), ncol = length(all_classes),
+                      dimnames = list(all_classes, all_classes))
+  cm_square[rownames(cm), colnames(cm)] <- cm
+  
+  # Normalizzazione per riga (prop.table con margin=1)
+  cm_norm <- prop.table(cm_square, margin = 1)
+  cm_norm[is.nan(cm_norm)] <- 0 # Gestione di eventuali divisioni per 0
+  
+  # Aggiustiamo i nomi per capirci
+  rownames(cm_norm) <- paste0(rownames(cm_norm), " (True)")
+  colnames(cm_norm) <- paste0(colnames(cm_norm), " (Pred)")
+  
+  # Titolo dinamico che esplicita la struttura
+  titolo_grafico <- paste0(
+    "Confusion Matrix [", embed_name, "]\n",
+    "Righe: Classi Reali (True) | Colonne: Classi Predette (Pred)"
+  )
+  
+  # 6. Plot della Mappa di Calore (Clustermap specchiata)
+  pheatmap(cm_norm,
+           cluster_rows = FALSE,      # row_cluster=False
+           cluster_cols = FALSE,      # col_cluster=False
+           display_numbers = TRUE,    # annot=True
+           number_format = "%.2f",    # fmt=".2f"
+           color = colorRampPalette(c("white", "purple"))(100), # cmap='Purples'
+           breaks = seq(0, 1, length.out = 101), # vmin=0, vmax=1
+           main = paste("Confusion Matrix -", embed_name),
+           angle_col = 45)
+  
+  return(list(predictions = preds, metrics = res_dict, confusion_matrix = cm_norm))
+}
+```
+
+```{r}
+# 1. Previsione usando gli Embeddings di scGPT
+results_scGPT <- run_cell_type_prediction(
+  sce = sce_be1, 
+  embed_name = "scGPT", 
+  cell_type_key = "Sample", 
+  kappa = 10
+)
+```
+
+
+```{r}
+# 2. Previsione usando le PCA standard
+results_PCA <- run_cell_type_prediction(
+  sce = sce_be1, 
+  embed_name = "PCA", 
+  cell_type_key = "Sample", 
+  kappa = 10
+)
+```
+

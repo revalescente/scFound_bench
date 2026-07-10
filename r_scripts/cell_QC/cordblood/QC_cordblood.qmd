@@ -16,6 +16,8 @@ execute:
 
 ```{r}
 #| label: setup-libraries
+#| message: false
+#| warning: false
 
 library(DropletQC)
 library(purrr)
@@ -25,6 +27,8 @@ library(dplyr)
 library(scuttle)
 library(scran)
 library(scater)
+library(anndataR)
+library(SingleCellExperiment)
 ```
 
 ## Data Loading and Initial Per-Cell QC
@@ -48,6 +52,27 @@ sce_cb <- readRDS("/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_
 sce_cb
 ```
 
+Let's read the anndata with the embeddings matrix
+```{r}
+#| label: anndata-read
+#| eval: false
+
+# Path automatically adapted for Cord Blood
+cb_ann <- read_h5ad("/projects/shared/intronic_bam/datasets/anndata/cb_scGPT_embeddings.h5ad")
+cb_ann
+```
+
+Add it into the reducedDim slot of the sce
+```{r}
+#| label: embeddings-add
+#| eval: false
+
+scgpt_matrix <- as.matrix(cb_ann$obsm['X_scGPT']$X_scGPT)
+scgpt_matrix_aligned <- scgpt_matrix[colnames(sce_cb), ]
+reducedDim(sce_cb, "scGPT") <- scgpt_matrix_aligned
+reducedDimNames(sce_cb)
+```
+
 ### Mitochondrial Metrics Calculation
 
 We identify mitochondrial genes based on the `MT-` prefix to compute per-cell quality control metrics.
@@ -55,7 +80,6 @@ We identify mitochondrial genes based on the `MT-` prefix to compute per-cell qu
 ```{r}
 #| label: mito-qc
 #| eval: false
-#| include: false
 
 # Identify mitochondrial genes based on rownames
 is_mito <- grepl("^MT-", rownames(sce_cb), ignore.case = TRUE)
@@ -110,7 +134,7 @@ We visualize the distribution of the nuclear fraction across different cell type
 #| fig-height: 6
 
 # Distribution of nuclear fraction per cell type
-p <- ggplot(as.data.frame(colData(sce_cb)), aes(x = nuclear_fraction_QC))
+p <- ggplot(as.data.frame(colData(sce_cb)), aes(x = nuclear_fraction))
 
 p + geom_density(fill = "lightgreen", alpha = 0.5) +
   facet_wrap(~celltype) +
@@ -136,6 +160,7 @@ We perform log-normalization, model the gene variance to select the Top 10% high
 
 ```{r}
 #| label: dimensionality-reduction
+#| eval: false
 
 sce_cb <- logNormCounts(sce_cb)
 dec <- modelGeneVar(sce_cb)
@@ -146,23 +171,51 @@ sce_cb <- runUMAP(sce_cb, dimred = "PCA")
 sce_cb
 ```
 
+Let's calculate the UMAP on the embeddings too
+```{r}
+#| label: embed-umap
+#| eval: false
+
+sce_cb <- runUMAP(sce_cb, dimred = "scGPT", name = "UMAP_embed")
+```
+
 ### Embedding Visualization (PCA vs UMAP)
 
 We display the low-dimensional spaces colored by cell type and by our updated nuclear fraction metric.
 
 ```{r}
-#| label: plot-embeddings
+#| label: plot-dimred
 #| fig-width: 12
 #| fig-height: 10
 
-umapp <- plotUMAP(sce_cb, colour_by = "celltype") + theme(legend.position = "bottom")
-pcap  <- plotPCA(sce_cb, colour_by = "celltype") + theme(legend.position = "none")
+# Cell identity
+umapp <- plotUMAP(sce_cb, colour_by = "celltype", dimred = "UMAP") + 
+  theme(legend.position = "bottom") + 
+  labs(title = "UMAP (PCA) colored by cell identity")
+pcap  <- plotPCA(sce_cb, colour_by = "celltype") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by cell identity")
 
-umapb <- plotUMAP(sce_cb, colour_by = "nuclear_fraction_QC") + theme(legend.position = "bottom")
-pcab  <- plotPCA(sce_cb, colour_by = "nuclear_fraction_QC") + theme(legend.position = "none")
+# Nuclear Fraction
+umapb <- plotUMAP(sce_cb, colour_by = "nuclear_fraction", dimred = "UMAP") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (PCA) colored by nuclear fraction")
+pcab  <- plotPCA(sce_cb, colour_by = "nuclear_fraction") + 
+  theme(legend.position = "none") +
+  labs(title = "PCA colored by nuclear fraction")
 
-# Layout orchestration
+# Umap embeddings
+umapes <- plotUMAP(sce_cb, colour_by = "celltype", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by cell identity")
+umape <- plotUMAP(sce_cb, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + 
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by nuclear fraction")
+
+# Composite layout
 (pcap | pcab) / (umapp | umapb)
+
+(umapes | umape)
 ```
 
 ---
@@ -176,7 +229,7 @@ MALAT1 is absent in cordblood
 #| eval: false
 #| fig-height: 5
 #| fig-width: 12
-#| include: false
+
 
 # Check feature expression on UMAP and PCA
 umapm <- plotUMAP(sce_cb, colour_by = "MALAT1")
@@ -194,11 +247,10 @@ umapb | umapm
 #| eval: false
 #| fig-height: 6
 #| fig-width: 12
-#| include: false
 
 plotExpression(sce_cb, 
                features = "MALAT1", 
-               x = "nuclear_fraction_QC", 
+               x = "nuclear_fraction", 
                other_fields = "celltype",
                exprs_values = "logcounts") +
   facet_wrap(~celltype) + 
@@ -222,13 +274,62 @@ Using `DropletQC`, we extract the nuclear fraction and total UMI counts to ident
 
 # Prepare the input data frame
 nf_umi <- data.frame(
-  nf = sce_cb$nuclear_fraction_QC,
-  umi = sce_cb$sum
+  nf = sce_cb$nuclear_fraction,
+  umi = sce_cb$sum,
+  celltype = sce_cb$celltype
 )
+
+rownames(nf_umi) <- colnames(sce_cb)
+
+# Handle NA values
+nf_umi <- nf_umi[!is.na(nf_umi$nf),]
 
 # Re-run to generate diagnostic plots and visualize the threshold cut-offs
 cb_ed <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
 ```
+
+```{r}
+#| label: cell-status-prop
+# Summary table of cell status
+table(cb_ed$cell_status)
+```
+
+## Investigation of possible association between empty droplets and cell identity
+
+Add the cell status column in the coldata of sce_cb. Note that MALAT1 is absent in this dataset, so we only evaluate the nuclear fraction distribution.
+
+```{r}
+#| label: cell_status-add
+#| eval: false
+sce_cb$cell_status <- cb_ed[colnames(sce_cb), "cell_status"]
+```
+
+```{r}
+table(sce_cb$celltype, sce_cb$cell_status)
+```
+
+```{r}
+#| label: cell-status-boxplots
+#| fig-width: 10
+#| fig-height: 6
+
+p1 <- sce_cb[, !is.na(sce_cb$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = nuclear_fraction, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +  
+  facet_wrap(~ celltype) +                           
+  theme_minimal() + 
+  labs(
+    title = "Nuclear fraction distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "Nuclear Fraction",
+    fill = "Status"
+  )
+
+p1
+```
+
+---
 
 ## Damaged Cell Identification
 
@@ -236,25 +337,54 @@ Using the cell type annotations, we call `identify_damaged_cells` to pinpoint ce
 
 ```{r}
 #| label: damaged-cells
-#| fig-width: 8
-#| fig-height: 6
+#| fig-width: 10
+#| fig-height: 12
 
-# Synchronize cell type metadata
-cb_ed$celltype <- sce_cb$celltype
+# Reorder columns with relocate using celltype
+cb_ed <- cb_ed |> 
+  relocate(celltype, .after = cell_status)
 
 # Detect damaged cell populations
 cb_ed_dc <- identify_damaged_cells(cb_ed, verbose = FALSE, output_plots = TRUE)
+
+# Final cell status summary
+table(cb_ed_dc[[1]]$cell_status)
+
+# Diagnostic plots for each cell identity group
+wrap_plots(cb_ed_dc[[2]], nrow = 6)
 ```
 
+Add again in the single cell experiment
 
 ```{r}
-#| label: detail-damaged-cells
+#| label: cell_status-add2
+#| eval: false
+sce_cb$cell_status <- cb_ed_dc[[1]][colnames(sce_cb), "cell_status"]
+```
 
-# Show classification output across cell types
-table(cb_ed_dc[[1]]$celltype, cb_ed_dc[[1]]$cell_status)
+```{r}
+table(sce_cb$celltype, sce_cb$cell_status)
+```
 
-# Display diagnostic QC plot for the Natural Killers group
-cb_ed_dc$plots$`Natural Killers`
+```{r}
+#| label: cell-status-boxplots2
+#| fig-width: 10
+#| fig-height: 6
+
+p1 <- sce_cb[, !is.na(sce_cb$cell_status)] |> 
+  ggcells(aes(x = cell_status, y = nuclear_fraction, fill = cell_status)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +  
+  facet_wrap(~ celltype) +                           
+  theme_minimal() + 
+  labs(
+    title = "Nuclear fraction distribution for cell status",
+    subtitle = "By each cell identity",
+    x = "Cell Status",
+    y = "Nuclear Fraction",
+    fill = "Status"
+  )
+
+p1
 ```
 
 ### Exporting the Finalized Object
