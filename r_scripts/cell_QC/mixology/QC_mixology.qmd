@@ -69,7 +69,7 @@ We inspect the global exonic mapping proportions and compute the true total sequ
 
 ```{r}
 #| label: calculate-nuclear-fraction
-#| eval: false
+#| eval: true
 
 
 # Inspect baseline exonic metrics
@@ -78,16 +78,16 @@ summary(sc_mix$mapped_to_exon)
 head(colData(sc_mix))
 
 # Calculate the total raw sequenced reads for each individual cell
-total_sequenced_reads <- colData(sc_mix)$unaligned + 
-  colData(sc_mix)$aligned_unmapped + 
-  colData(sc_mix)$mapped_to_exon + 
-  colData(sc_mix)$mapped_to_intron + 
-  colData(sc_mix)$ambiguous_mapping + 
-  colData(sc_mix)$mapped_to_MT + 
+total_sequenced_reads <- colData(sc_mix)$unaligned +
+  colData(sc_mix)$aligned_unmapped +
+  colData(sc_mix)$mapped_to_exon +
+  colData(sc_mix)$mapped_to_intron +
+  colData(sc_mix)$ambiguous_mapping +
+  colData(sc_mix)$mapped_to_MT +
   colData(sc_mix)$mapped_to_ERCC
 
 # Calculate the precise nuclear fraction and store it in colData
-colData(sc_mix)$nuclear_fraction <- (colData(sc_mix)$mapped_to_exon / total_sequenced_reads)
+colData(sc_mix)$nuclear_fraction <- (colData(sc_mix)$mapped_to_intron / total_sequenced_reads)
 ```
 
 ---
@@ -158,26 +158,26 @@ We display the low-dimensional projection spaces side-by-side, assessing separat
 #| fig-height: 10
 
 # Cell identity
-umapp <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP") + 
-  theme(legend.position = "bottom") + 
+umapp <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP") +
+  theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by cell identity")
-pcap  <- plotPCA(sc_mix, colour_by = "cell_line") + 
+pcap  <- plotPCA(sc_mix, colour_by = "cell_line") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by cell identity")
 
 # Nuclear Fraction
-umapb <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP") + 
+umapb <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by nuclear fraction")
-pcab  <- plotPCA(sc_mix, colour_by = "nuclear_fraction") + 
+pcab  <- plotPCA(sc_mix, colour_by = "nuclear_fraction") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by nuclear fraction")
 
 # Umap embeddings
-umapes <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP_embed") + 
+umapes <- plotUMAP(sc_mix, colour_by = "cell_line", dimred = "UMAP_embed") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (Embeddings) colored by cell identity")
-umape <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP_embed") + 
+umape <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP_embed") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (Embeddings) colored by nuclear fraction")
 
@@ -198,15 +198,15 @@ We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** 
 #| fig-width: 12
 #| fig-height: 5
 
-umapm <- plotUMAP(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+umapm <- plotUMAP(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by MALAT1 log expression")
-pcam  <- plotPCA(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") + 
+pcam  <- plotPCA(sc_mix, colour_by = "MALAT1") + theme(legend.position = "bottom") +
   labs(title = "PCA colored by MALAT1 log expression")
 umapem <- plotUMAP(sc_mix, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
   labs(title = "UMAP (Embeddings) colored by MALAT1")
 
 # Direct comparison in reduced dimensions
-pcam | umapem | umapm 
+pcam | umapem | umapm
 ```
 
 ```{r}
@@ -231,13 +231,13 @@ umapm | umapb | umapp
 #| fig-width: 12
 #| fig-height: 6
 
-plotExpression(sc_mix, 
-               features = "MALAT1", 
-               x = "nuclear_fraction", 
+plotExpression(sc_mix,
+               features = "MALAT1",
+               x = "nuclear_fraction",
                other_fields = "cell_line",
                exprs_values = "logcounts") +
-  facet_wrap(~cell_line) + 
-  aes(color = cell_line) + 
+  facet_wrap(~cell_line) +
+  aes(color = cell_line) +
   theme_minimal() +
   labs(title = "MALAT1 Expression vs Nuclear Fraction per Cell Line",
        x = "Nuclear Fraction",
@@ -296,11 +296,11 @@ table(sc_mix$cell_line, sc_mix$cell_status)
 #| fig-width: 14
 #| fig-height: 6
 
-p1 <- sc_mix[, !is.na(sc_mix$cell_status)] |> 
+p1 <- sc_mix[, !is.na(sc_mix$cell_status)] |>
   ggcells(aes(x = cell_status, y = nuclear_fraction, fill = cell_status)) +
-  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +  
-  facet_wrap(~ cell_line) +                           
-  theme_minimal() + 
+  geom_boxplot(alpha = 0.7, outlier.size = 0.5) +
+  facet_wrap(~ cell_line) +
+  theme_minimal() +
   labs(
     title = "Nuclear fraction distribution for cell status",
     subtitle = "By each cell identity",
@@ -309,11 +309,11 @@ p1 <- sc_mix[, !is.na(sc_mix$cell_status)] |>
     fill = "Status"
   )
 
-p2 <- sc_mix[, !is.na(sc_mix$cell_status)] |> 
+p2 <- sc_mix[, !is.na(sc_mix$cell_status)] |>
   ggcells(aes(x = cell_status, y = MALAT1, fill = cell_status)) +
   geom_boxplot(alpha = 0.7, outlier.size = 0.5) +
   facet_wrap(~ cell_line) +
-  theme_minimal() + 
+  theme_minimal() +
   labs(
     title = "MALAT1 distribution for cell status",
     subtitle = "By each cell identity",
@@ -337,7 +337,7 @@ We isolate cells suffering from experimental stress or cellular damage by aligni
 #| fig-height: 12
 
 # Reorder metadata columns with dplyr relocate using cell_line
-cb_mix <- cb_mix |> 
+cb_mix <- cb_mix |>
   relocate(cell_line, .after = cell_status)
 
 # Identify cell-damage status using DropletQC
@@ -348,6 +348,32 @@ table(cb_mix_dc[[1]]$cell_status)
 
 # Generate multi-panel structural QC diagnostics plots
 wrap_plots(cb_mix_dc[[2]], nrow = 5)
+```
+
+# Last plots: UMAP damaged and empty droplets
+
+```{r}
+#| label: umap-damaged-empty
+#| fig-width: 12
+#| fig-height: 5
+umapc <- plotUMAP(sc_mix, colour_by = "cell_status") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (PCA) colored by cell status")
+pcam  <- plotPCA(sc_mix, colour_by = "cell_status") + theme(legend.position = "bottom") +
+  labs(title = "PCA colored by cell status")
+umapec <- plotUMAP(sc_mix, colour_by = "cell_status", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (Embeddings) colored by cell status")
+
+umapc | pcam | umapec
+```
+
+and the relationship between cell status and MALAT1 expression in the embeddings
+
+```{r}
+#| label: umaps-cs-malat1
+#| fig-width: 12
+#| fig-height: 5
+
+umapec | umapem | umapes
 ```
 
 ### Saving the Updated SCE Object

@@ -14,7 +14,6 @@ execute:
   message: false
 ---
 
-
 ```{r}
 library(SingleCellExperiment)
 library(FNN)
