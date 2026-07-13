@@ -69,8 +69,7 @@ We inspect the global exonic mapping proportions and compute the true total sequ
 
 ```{r}
 #| label: calculate-nuclear-fraction
-#| eval: true
-
+#| eval: false
 
 # Inspect baseline exonic metrics
 hist(prop.table(sc_mix$mapped_to_exon))
@@ -184,7 +183,7 @@ umape <- plotUMAP(sc_mix, colour_by = "nuclear_fraction", dimred = "UMAP_embed")
 # Composite multi-panel layout
 (pcap | pcab) / (umapp | umapb)
 
-(umapes | umape)
+(umape | umapes)
 ```
 
 ---
@@ -221,7 +220,7 @@ umape | umapem | umapes
 #| fig-width: 12
 #| fig-height: 5
 
-umapm | umapb | umapp
+umapb | umapm | umapp
 ```
 
 ### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Cell Line
