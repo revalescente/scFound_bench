@@ -58,6 +58,7 @@ sce_be1 <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
 sce_be1
 ```
 
+#### scGPT embeddings
 Let's read the anndata with the embeddings matrix
 ```{r}
 #| label: anndata-read
@@ -75,6 +76,29 @@ scgpt_matrix <- as.matrix(be_ann$obsm['X_scGPT']$X_scGPT)
 scgpt_matrix_aligned <- scgpt_matrix[colnames(sce_be1), ]
 reducedDim(sce_be1, "scGPT") <- scgpt_matrix_aligned
 ```
+
+#### GeneFormer embeddings
+
+```{r}
+#| label: csv-emb-load
+#| eval: false
+
+emb_gf <-readr::read_csv("/projects/shared/intronic_bam/datasets/embeddings/geneformer/be1_geneformer.csv")
+```
+
+Add it into the reduced dims of the sce
+
+```{r}
+#| label: merge-gf-embs
+#| eval: false
+
+reducedDim(sce_be1, "GeneFormer") <- emb_gf[match(as.character(colnames(sce_be1)), as.character(emb_gf$Barcode)), ] |>
+  select(where(is.numeric), -any_of(c("Unnamed: 0", "...1"))) |>
+  as.matrix() |>
+  `rownames<-`(as.character(colnames(sce_be1)))
+
+```
+
 
 ### Mapping Nuclear Fraction to `colData`
 
@@ -148,13 +172,25 @@ sce_be1 <- runUMAP(sce_be1, dimred = "PCA")
 sce_be1
 ```
 
-Let's calculate the UMAP on the embeddings too
+Let's calculate the UMAP on the embeddings of scGPT and GeneFormer
 
 ```{r}
-#| label: embed-umap
+#| label: umap-scgpt
 #| eval: false
 
-sce_be1 <- runUMAP(sce_be1, dimred = "scGPT", name = "UMAP_embed")
+sce_be1 <- runUMAP(sce_be1, dimred = "scGPT", name = "UMAP_scGPT")
+```
+
+```{r}
+#| label: umap-gf
+#| eval: false
+
+sce_be1 <- runUMAP(sce_be1, dimred = "GeneFormer", name = "UMAP_GeneFormer")
+```
+
+```{r}
+# Rename 'Geneformer' to 'Geneformer_V2'
+reducedDimNames(sce_be1)[reducedDimNames(sce_be1) == "UMAP_embed"] <- "UMAP_scGPT"
 ```
 
 
@@ -164,38 +200,61 @@ We compare the embedding spaces side-by-side, coloring cells by Sample and Nucle
 
 ```{r}
 #| label: plot-dimred
-#| fig-width: 12
-#| fig-height: 10
 
-# Cell identity
-umapp <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") +
+# Cell identity - UMAP + PCA
+umapsm <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by cell identity")
-pcap  <- plotPCA(sce_be1, colour_by = "Sample") +
+pcasm  <- plotPCA(sce_be1, colour_by = "Sample") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by cell identity")
 
-# Nuclear Fraction
-umapb <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP") +
+# Nuclear Fraction - UMAP + PCA
+umapnf <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by nuclear fraction")
-pcab  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") +
+pcanf  <- plotPCA(sce_be1, colour_by = "nuclear_fraction") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by nuclear fraction")
+```
 
-# Umap embeddings
-umapes <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_embed") +
+#### scGPT embeddings UMAP
+
+```{r}
+#| label: plot-umap-scgpt
+umapgs <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_scGPT") +
   theme(legend.position = "bottom") +
-  labs(title = "UMAP (Embeddings) colored by cell identity")
-umape <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_embed") +
+  labs(title = "UMAP (scGPT) colored by cell identity")
+umapgnf <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_scGPT") +
   theme(legend.position = "bottom") +
-  labs(title = "UMAP (Embeddings) colored by nuclear fraction")
+  labs(title = "UMAP (scGPT) colored by nuclear fraction")
+```
 
-# Composite layout
-(pcap | pcab ) / (umapp | umapb )
+#### GeneFormer embeddings UMAP
 
-(umapes | umape )
+```{r}
+#| label: plot-umap-gf
+umapgfs <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP_GeneFormer") +
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by cell identity")
+umapgfnf <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_GeneFormer") +
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by nuclear fraction")
+```
 
+```{r}
+#| label: plots-pca-results
+#| fig-width: 12
+#| fig-height: 10
+
+(pcasm | pcanf ) / (umapsm | umapnf )
+```
+
+```{r}
+#| label: plots-scgpt-gf
+#| fig-width: 12
+#| fig-height: 10
+(umapgs | umapgnf) / (umapgfs | umapgfnf)
 ```
 
 ---
@@ -211,27 +270,38 @@ We evaluate the behavior of the nuclear-retained long non-coding RNA **MALAT1** 
 
 umapm <- plotUMAP(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by MALAT1 log expression")
-pcam  <- plotPCA(sce_be1, colour_by = "MALAT1") + theme(legend.position = "bottom") +
-  labs(title = "PCA colored by MALAT1 log expression")
-umapem <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
-  labs(title = "UMAP (Embeddings) colored by MALAT1")
+umapgfm <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by MALAT1")
+umapgptm <- plotUMAP(sce_be1, colour_by = "MALAT1", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (scGPT) colored by MALAT1")
 
 # Direct comparison in reduced dimensions
-pcam | umapem | umapm
+umapm | umapgfm | umapgptm
+```
+
+### UMAP of scGPT embeddings
+
+```{r}
+#| label: comp-scgpt
+#| fig-width: 12
+#| fig-height: 5
+umapgnf | umapgptm | umapgs
+```
+
+### UMAP of GeneFormer embeddings
+
+```{r}
+#| label: comp-gf
+#| fig-width: 12
+#| fig-height: 5
+umapgfnf | umapgfm | umapgfs
 ```
 
 ```{r}
-#| label: umap-embed
+#| label: comp-malat1
 #| fig-width: 12
 #| fig-height: 5
-umape | umapem | umapes
-```
-
-```{r}
-#| label: umap-malat1
-#| fig-width: 12
-#| fig-height: 5
-umapm | umapb | umapp
+umapm | umapnf | umapsm
 ```
 
 
@@ -363,26 +433,36 @@ wrap_plots(cb_be1_dc[[2]], nrow = 6)
 
 ```{r}
 #| label: umap-damaged-empty
-#| fig-width: 12
-#| fig-height: 5
+#| fig-width: 10
+#| fig-height: 11
 umapc <- plotUMAP(sce_be1, colour_by = "cell_status") + theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by cell status")
 pcam  <- plotPCA(sce_be1, colour_by = "cell_status") + theme(legend.position = "bottom") +
   labs(title = "PCA colored by cell status")
-umapec <- plotUMAP(sce_be1, colour_by = "cell_status", dimred = "UMAP_embed") + theme(legend.position = "bottom") +
-  labs(title = "UMAP (Embeddings) colored by cell status")
+umapec <- plotUMAP(sce_be1, colour_by = "cell_status", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (scGPT) colored by cell status")
+umapeg <- plotUMAP(sce_be1, colour_by = "cell_status", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by cell status")
 
-umapc | pcam | umapec
+( umapc | pcam ) / ( umapec | umapeg )
 ```
 
 and the relationship between cell status and MALAT1 expression in the embeddings
 
 ```{r}
-#| label: umaps-cs-malat1
+#| label: scgpt-cs-malat1
 #| fig-width: 12
 #| fig-height: 5
 
-umapec | umapem | umapes
+umapec | umapgptm | umapgs
+```
+
+```{r}
+#| label: gf-cs-malat1
+#| fig-width: 12
+#| fig-height: 5
+
+umapeg | umapgfm | umapgfs
 ```
 
 ### Saving the Updated SCE Object

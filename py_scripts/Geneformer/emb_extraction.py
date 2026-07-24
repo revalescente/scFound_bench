@@ -30,8 +30,8 @@ def main():
             "Sample",
         ],  # Preserves Barcode and Sample in the output dataframe
         labels_to_plot=["Sample"],  # Label used to color UMAP/Heatmap
-        forward_batch_size=512,  # Adjust based on GPU memory
-        nproc=4,  # Number of CPU processes
+        forward_batch_size=256,  # Adjust based on GPU memory
+        nproc=1,  # Number of CPU processes
         summary_stat=None,  # None outputs full embeddings per cell
     )
 
