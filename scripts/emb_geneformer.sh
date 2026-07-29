@@ -29,11 +29,11 @@ GPU_PID=$!
 
 # Tokenization of the input data
 echo "Tokenizing input data..."
-python /home/vreffo/scFound_bench/py_scripts/Geneformer/tokenizer.py
+python /home/vreffo/scFound_bench/py_scripts/Geneformer/cordblood/tokenizer.py
 
 # Embedding extraction
 echo "Starting Geneformer embedding extraction..."
-python /home/vreffo/scFound_bench/py_scripts/Geneformer/emb_extraction.py
+python /home/vreffo/scFound_bench/py_scripts/Geneformer/cordblood/emb_extraction.py
 
 # Stop GPU monitoring
 kill $GPU_PID
