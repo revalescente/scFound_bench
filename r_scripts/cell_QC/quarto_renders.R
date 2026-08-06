@@ -1,5 +1,9 @@
-qmdfiles <- c("~/scFound_bench/r_scripts/cell_QC/BE1/QC_be1.qmd",
-  "~/scFound_bench/r_scripts/cell_QC/cordblood/QC_cordblood.qmd",
-  "~/scFound_bench/r_scripts/cell_QC/mixology/QC_mixology.qmd")
+datasets <- c("BE1", "cordblood", "sc_mixology")
 
-purrr::map(qmdfiles, \(file) {quarto::quarto_render(input = file)})
+purrr::walk(datasets, \(ds) {
+  quarto::quarto_render(
+    input = "~/scFound_bench/r_scripts/cell_QC/QC_main.qmd",
+    execute_params = list(dataset = ds),
+    output_file = paste0("QC_", ds, ".html")
+  )
+})

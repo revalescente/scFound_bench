@@ -1,0 +1,17 @@
+BE1:
+  sce_path: "/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS"
+  prefix: "be1"
+  cell_id_col: "Sample"
+  mito_pattern: "^MT-"
+
+cordblood:
+  sce_path: "/projects/shared/intronic_bam/datasets/cord_blood/cord_blood_sce.RDS"
+  prefix: "cb"
+  cell_id_col: "celltype"
+  mito_pattern: "^MT-"
+
+sc_mixology:
+  sce_path: "/projects/shared/intronic_bam/datasets/sc_mixology/sc_mix.RDS"
+  prefix: "mix"
+  cell_id_col: "cell_line"
+  mito_pattern: "^MT-"

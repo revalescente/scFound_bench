@@ -1,0 +1,15 @@
+```{r}
+#| label: setup-libraries-and-config
+#| message: false
+#| warning: false
+
+source("helpers_qc.R")
+
+# Carica la configurazione YAML
+all_configs <- yaml::read_yaml("configs/datasets.yaml")
+curr_cfg    <- all_configs[[params$dataset]]
+
+# Carica i dati e standardizza la colonna identificativa delle cellule
+sce <- readRDS(curr_cfg$sce_path)
+colData(sce)$cell_id <- colData(sce)[[curr_cfg$cell_id_col]]
+```
