@@ -14,15 +14,25 @@ if (any(is_mito)) {
 ```
 
 ```{r}
-#| label: add-embeddings
+#| label: add-scgpt-embeddings
 
 # Percorsi dinamici basati sul prefisso del dataset
 scgpt_path <- sprintf("/projects/shared/intronic_bam/datasets/anndata/%s_scGPT_embeddings.h5ad", curr_cfg$prefix)
+
+# Pipeline di caricamento embeddings (pipe-friendly)
+sce <- sce |>
+  add_h5ad_embedding("scGPT", scgpt_path, "X_scGPT")
+```
+
+
+```{r}
+#| label: add-gf-embeddings
+
+# Percorsi dinamici basati sul prefisso del dataset
 gf_path    <- sprintf("/projects/shared/intronic_bam/datasets/embeddings/geneformer/%s_geneformer.csv", curr_cfg$prefix)
 
 # Pipeline di caricamento embeddings (pipe-friendly)
-sce <- sce %>%
-  add_h5ad_embedding("scGPT", scgpt_path, "X_scGPT") %>%
+sce <- sce |>
   add_csv_embedding("GeneFormer", gf_path)
 ```
 
@@ -32,9 +42,4 @@ sce <- sce %>%
 # Rilevamento automatico delle funzionalità presenti
 has_geneformer <- "GeneFormer" %in% reducedDimNames(sce)
 has_malat1     <- any(grepl("^MALAT1$", rownames(sce), ignore.case = TRUE))
-
-# Standardizzazione eventuale nome simbolo per MALAT1
-if (has_malat1) {
-  rownames(sce)[grepl("^MALAT1$", rownames(sce), ignore.case = TRUE)] <- "MALAT1"
-}
 ```
