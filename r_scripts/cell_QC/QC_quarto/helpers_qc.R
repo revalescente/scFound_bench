@@ -39,22 +39,31 @@ add_h5ad_embedding <- function(sce, embed_name, path, obsm_key) {
   ann <- anndataR::read_h5ad(path)
   scgpt_matrix <- as.matrix(ann$obsm[obsm_key][[obsm_key]])
   
-  # 1. Recupera i rownames se sono NULL
-  if (is.null(rownames(scgpt_matrix)) && !is.null(ann$obs_names)) {
-    rownames(scgpt_matrix) <- as.character(ann$obs_names)
+  # Se i rownames sono NULL, assegnali da obs_names o rownames(ann$obs)
+  if (is.null(rownames(scgpt_matrix))) {
+    if (!is.null(ann$obs_names)) {
+      rownames(scgpt_matrix) <- as.character(ann$obs_names)
+    } else if (!is.null(rownames(ann$obs))) {
+      rownames(scgpt_matrix) <- rownames(ann$obs)
+    }
   }
   
-  # 2. Rimuovi l'eventuale suffisso '-0' finale aggiunto da Python
-  rownames(scgpt_matrix) <- sub("-0$", "", rownames(scgpt_matrix))
+  # Rimuove la stringa finale "-0" dai rownames degli embeddings
+  if (!is.null(rownames(scgpt_matrix))) {
+    rownames(scgpt_matrix) <- sub("-0$", "", rownames(scgpt_matrix))
+  }
   
-  # 3. Allineamento sicuro dei barcode
+  # Identifica le cellule in comune
   common_cells <- intersect(colnames(sce), rownames(scgpt_matrix))
   if (length(common_cells) == 0) {
     warning(paste("Nessun barcode corrispondente trovato per:", embed_name))
     return(sce)
   }
   
-  reducedDim(sce, embed_name) <- scgpt_matrix[colnames(sce), , drop = FALSE]
+  # Mantiene solo le cellule/barcode che matchano in entrambi gli oggetti
+  sce <- sce[, common_cells]
+  reducedDim(sce, embed_name) <- scgpt_matrix[common_cells, , drop = FALSE]
+  
   return(sce)
 }
 
@@ -62,13 +71,32 @@ add_h5ad_embedding <- function(sce, embed_name, path, obsm_key) {
 add_csv_embedding <- function(sce, embed_name, path, barcode_col = "Barcode") {
   if (!file.exists(path)) return(sce)
   emb <- readr::read_csv(path, show_col_types = FALSE)
-
-  mat <- emb %>%
-    filter(as.character(.data[[barcode_col]]) %in% colnames(sce)) %>%
-    select(where(is.numeric), -any_of(c("Unnamed: 0", "...1"))) %>%
+  
+  # Pulizia barcode: rimuove il trattino e le cifre finali (es. -0, -1, -99)
+  emb[[barcode_col]] <- sub("-[0-9]+$", "", as.character(emb[[barcode_col]]))
+  
+  # Identifica le cellule in comune
+  common_cells <- intersect(colnames(sce), emb[[barcode_col]])
+  if (length(common_cells) == 0) {
+    warning(paste("Nessun barcode corrispondente trovato per:", embed_name))
+    return(sce)
+  }
+  
+  # Filtra ed elimina eventuali duplicati di barcode
+  emb_filtered <- emb |>
+    dplyr::filter(.data[[barcode_col]] %in% common_cells) |>
+    dplyr::distinct(.data[[barcode_col]], .keep_all = TRUE)
+  
+  # Estrazione matrice numerica
+  mat <- emb_filtered |>
+    dplyr::select(where(is.numeric), -dplyr::any_of(c("Unnamed: 0", "...1"))) |>
     as.matrix()
-
-  rownames(mat) <- as.character(emb[[barcode_col]][emb[[barcode_col]] %in% colnames(sce)])
-  reducedDim(sce, embed_name) <- mat[colnames(sce), ]
+  
+  rownames(mat) <- emb_filtered[[barcode_col]]
+  
+  # Sincronizza cellule e assegna l'embedding ordinato
+  sce <- sce[, common_cells]
+  reducedDim(sce, embed_name) <- mat[common_cells, , drop = FALSE]
+  
   return(sce)
 }

@@ -19,7 +19,7 @@ p + geom_density(fill = "lightblue", alpha = 0.5) +
   labs(title = paste("Distribution of Nuclear Fraction by cell identity"),
        x = "Nuclear Fraction")
 
-p + aes(y = log10(sum), colour = cell_id) +
+p + aes(y = log10(sum), colour = "cell_id") +
   geom_point(alpha = 0.6, size = 0.6) +
   theme_minimal() +
   labs(title = paste("UMI Counts vs Nuclear Fraction by cell identity"),
@@ -30,8 +30,8 @@ p + aes(y = log10(sum), colour = cell_id) +
 ## Normalization and Dimensionality Reduction
 
 ```{r}
-#| label: dimensionality-reduction
-#| eval: false
+#| label: dimensionality-reduction-pca
+#| eval: !expr '!"PCA" %in% SingleCellExperiment::reducedDimNames(sce)'
 
 sce <- logNormCounts(sce)
 dec <- modelGeneVar(sce)
@@ -39,22 +39,33 @@ hvgs <- getTopHVGs(dec, prop = 0.1)
 
 sce <- runPCA(sce, subset_row = hvgs, ncomponents = 50)
 sce <- runUMAP(sce, dimred = "PCA")
+```
+
+```{r}
+#| label: dimensionality-reduction-scgpt
+#| eval: !expr '!"UMAP_scGPT" %in% SingleCellExperiment::reducedDimNames(sce)'
 
 sce <- runUMAP(sce, dimred = "scGPT", name = "UMAP_scGPT")
+```
+
+
+```{r}
+#| label: dimensionality-reduction-gf
+#| eval: !expr '!"UMAP_GeneFormer" %in% SingleCellExperiment::reducedDimNames(sce)'
 
 sce <- runUMAP(sce, dimred = "GeneFormer", name = "UMAP_GeneFormer")
-
 ```
+
 
 ```{r}
 #| label: plot-dimred
 #| fig-width: 12
 #| fig-height: 10
 
-umapsm <- plotUMAP(sce, colour_by = cell_id, dimred = "UMAP") +
+umapsm <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (PCA) colored by cell identity")
-pcasm  <- plotPCA(sce, colour_by = cell_id) +
+pcasm  <- plotPCA(sce, colour_by = "cell_id") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by cell identity")
 
@@ -65,7 +76,7 @@ pcanf  <- plotPCA(sce, colour_by = "nuclear_fraction") +
   theme(legend.position = "none") +
   labs(title = "PCA colored by nuclear fraction")
 
-umapgs <- plotUMAP(sce, colour_by = cell_id, dimred = "UMAP_scGPT") +
+umapgs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_scGPT") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (scGPT) colored by cell identity")
 umapgnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_scGPT") +
@@ -90,7 +101,7 @@ umapgnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_scGPT") 
 #| eval: !expr has_geneformer
 
 if (has_geneformer) {
-  umapgfs <- plotUMAP(sce, colour_by = cell_id, dimred = "UMAP_GeneFormer") +
+  umapgfs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_GeneFormer") +
     theme(legend.position = "bottom") +
     labs(title = "UMAP (GeneFormer) colored by cell identity")
   umapgfnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_GeneFormer") +
@@ -141,10 +152,10 @@ if (has_malat1) {
   print(plotExpression(sce,
                  features = "MALAT1",
                  x = "nuclear_fraction",
-                 other_fields = cell_id,
+                 other_fields = "cell_id",
                  exprs_values = "logcounts") +
     facet_wrap(~ cell_id) +
-    aes(color = cell_id) +
+    aes(color = "cell_id") +
     theme_minimal() +
     labs(title = "MALAT1 Expression vs Nuclear Fraction per cell identity",
          x = "Nuclear Fraction",
@@ -228,7 +239,12 @@ cb_ed_dc <- identify_damaged_cells(cb_ed, verbose = FALSE, output_plots = TRUE)
 
 table(cb_ed_dc[[1]]$cell_status)
 
-wrap_plots(cb_ed_dc[[2]], ncol = 2)
+if (length(cb_ed_dc[[2]]) > 0) {
+  # Stampa o unisci i grafici solo se la lista NON è vuota
+  patchwork::wrap_plots(cb_ed_dc[[2]], ncol = 2)
+} else {
+  message("Nessuna cellula danneggiata identificata o nessun grafico da mostrare.")
+}
 ```
 
 ```{r}
@@ -293,7 +309,7 @@ if (!has_malat1) {
 
 ```{r}
 #| label: save-object
-#| eval: params$save_result
+#| eval: !expr params$save_result
 
 saveRDS(sce, file = curr_cfg$sce_path)
 ```

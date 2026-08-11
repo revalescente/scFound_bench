@@ -14,13 +14,34 @@ execute:
   message: false
 params:
   dataset: "BE1"
-  save_result: false
+  save_result: true
 ---
 
-{{< include modules/_setup_config.qmd >}}
-{{< include modules/_add_info.qmd >}}
+```{r}
+#| label: setup-libraries
+#| message: false
+#| warning: false
 
-```{r add-info-text-dynamic, echo=FALSE, results='asis'}
+library(DropletQC)
+library(purrr)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(scuttle)
+library(scran)
+library(scater)
+library(anndataR)
+library(SingleCellExperiment)
+```
+
+{{< include _setup_config.qmd >}}
+{{< include _add_info.qmd >}}
+
+```{r}
+#| label: add-info-text-dynamic
+#| echo: false
+#| results: asis
+
 # (Opzionale) Include solo il testo markdown/note specifico per dataset se esiste
 info_file <- paste0("modules/_notes_", params$dataset, ".qmd")
 if (file.exists(info_file)) {
@@ -28,4 +49,4 @@ if (file.exists(info_file)) {
 }
 ```
 
-{{< include modules/_QC_template.qmd >}}
+{{< include _QC_template.qmd >}}

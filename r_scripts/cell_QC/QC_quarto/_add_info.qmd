@@ -2,6 +2,7 @@
 
 ```{r}
 #| label: calculate-nuclear-fraction
+#| eval: false
 
 # Calcolo o caricamento automatico della Nuclear Fraction
 sce$nuclear_fraction <- fetch_nuclear_fraction(sce, params$dataset)
@@ -15,7 +16,7 @@ if (any(is_mito)) {
 
 ```{r}
 #| label: add-scgpt-embeddings
-
+#| eval: false
 # Percorsi dinamici basati sul prefisso del dataset
 scgpt_path <- sprintf("/projects/shared/intronic_bam/datasets/anndata/%s_scGPT_embeddings.h5ad", curr_cfg$prefix)
 
@@ -27,11 +28,12 @@ sce <- sce |>
 
 ```{r}
 #| label: add-gf-embeddings
+#| eval: !expr '!"GeneFormer" %in% SingleCellExperiment::reducedDimNames(sce)'
 
 # Percorsi dinamici basati sul prefisso del dataset
 gf_path    <- sprintf("/projects/shared/intronic_bam/datasets/embeddings/geneformer/%s_geneformer.csv", curr_cfg$prefix)
 
-# Pipeline di caricamento embeddings (pipe-friendly)
+# Pipeline di caricamento embeddings
 sce <- sce |>
   add_csv_embedding("GeneFormer", gf_path)
 ```
