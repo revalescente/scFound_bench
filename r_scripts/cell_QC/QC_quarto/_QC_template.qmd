@@ -8,23 +8,31 @@ table(colData(sce)$cell_id)
 
 ```{r}
 #| label: plot-distributions
-#| fig-width: 10
-#| fig-height: 6
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Distribution of Nuclear Fraction - BE1 Dataset by Cell Identity"
+#|   - "UMI Counts vs Nuclear Fraction"
 
-p <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction))
-
-p + geom_density(fill = "lightblue", alpha = 0.5) +
-  facet_wrap(~ cell_id) +
+# Primo grafico: Distribuzione di densità
+p1 <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction)) +
+  geom_density(fill = "lightblue", alpha = 0.5) +
+  facet_wrap(~cell_id) +
   theme_minimal() +
-  labs(title = paste("Distribution of Nuclear Fraction by cell identity"),
-       x = "Nuclear Fraction")
+  labs(
+    x = "Nuclear Fraction"
+  )
 
-p + aes(y = log10(sum), colour = "cell_id") +
+# Secondo grafico: Scatter plot UMI vs Nuclear Fraction
+p2 <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction, y = log10(sum), colour = "cell_id")) +
   geom_point(alpha = 0.6, size = 0.6) +
   theme_minimal() +
-  labs(title = paste("UMI Counts vs Nuclear Fraction by cell identity"),
-       x = "Nuclear Fraction",
-       y = "log10(UMI Sum)")
+  labs(
+    x = "Nuclear Fraction",
+    y = "log10(UMI Sum)"
+  )
+
+p1
+p2
 ```
 
 ## Normalization and Dimensionality Reduction
@@ -82,64 +90,128 @@ umapgs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_scGPT") +
 umapgnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_scGPT") +
   theme(legend.position = "bottom") +
   labs(title = "UMAP (scGPT) colored by nuclear fraction")
+```
 
-(pcasm | pcanf) / (umapsm | umapnf)
+
+```{r}
+#| label: plot-pca-nf
+#| layout-ncol: 2
+#| fig-cap: "Dimensionality Reduction: PCA and its UMAP"
+#| fig-subcap:
+#|   - "PCA for cell_id"
+#|   - "PCA for Nuclear Fraction"
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
+pcasm 
+pcanf
+umapsm
+umapnf
 ```
 
 ```{r}
 #| label: plot-umap-scgpt
-#| fig-width: 12
-#| fig-height: 5
+#| layout-ncol: 2
+#| fig-cap: "UMAP of scGPT colored by cell_id and Nuclear Fraction"
+#| fig-subcap:
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
 
-(umapgs | umapgnf)
+umapgs
+umapgnf
 ```
 
 ```{r}
 #| label: plot-umap-gf
-#| fig-width: 12
-#| fig-height: 5
 #| eval: !expr has_geneformer
+#| layout-ncol: 2
+#| fig-cap: "UMAP of GeneFormer colored by cell_id and Nuclear Fraction"
+#| fig-subcap:
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
 
-if (has_geneformer) {
-  umapgfs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_GeneFormer") +
-    theme(legend.position = "bottom") +
-    labs(title = "UMAP (GeneFormer) colored by cell identity")
-  umapgfnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_GeneFormer") +
-    theme(legend.position = "bottom") +
-    labs(title = "UMAP (GeneFormer) colored by nuclear fraction")
-  print(umapgfs | umapgfnf)
-}
+umapgfs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_GeneFormer") +
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by cell identity")
+umapgfnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_GeneFormer") +
+  theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by nuclear fraction")
+
+umapgfs
+umapgfnf
 ```
 
 ## Focus on MALAT1 and Nuclear Fraction Relationship
 
 ```{r}
 #| label: malat1-plots
-#| fig-width: 12
-#| fig-height: 5
 #| eval: !expr has_malat1
 
-if (has_malat1) {
-  umapm <- plotUMAP(sce, colour_by = "MALAT1") + theme(legend.position = "bottom") +
-    labs(title = "UMAP (PCA) colored by MALAT1 log expression")
-  umapgptm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
-    labs(title = "UMAP (scGPT) colored by MALAT1")
 
-  if (has_geneformer) {
-    umapgfm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
-      labs(title = "UMAP (GeneFormer) colored by MALAT1")
+umapm <- plotUMAP(sce, colour_by = "MALAT1") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (PCA) colored by MALAT1 log expression")
 
-    print(umapm | umapgfm | umapgptm)
-    print(umapgnf | umapgptm | umapgs)
-    print(umapgfnf | umapgfm | umapgfs)
-  } else {
-    print(pcanf | plotPCA(sce, colour_by = "MALAT1"))
-    print(umapnf | umapm)
-    print(umapm | umapgptm)
-    print(umapgnf | umapgptm | umapgs)
-  }
-  print(umapm | umapnf | umapsm)
-}
+umapgptm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (scGPT) colored by MALAT1")
+
+umapgfm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
+  labs(title = "UMAP (GeneFormer) colored by MALAT1")
+```
+
+
+```{r}
+#| label: malat1-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of MALAT1"
+#| fig-subcap:
+#|   - "UMAP of PCA"
+#|   - "UMAP of scGPT embeddings"
+#|   - "UMAP of GeneFormer embeddings"
+#| fig-cap-location: top
+#| include: false
+
+umapm
+umapgptm
+umapgfm
+```
+
+
+```{r}
+#| label: gpt-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of scGPT"
+#| fig-subcap:
+#|   - "Nuclear Fraction"
+#|   - "MALAT1"
+#|   - "cell_id"
+#| fig-cap-location: top
+#| include: false
+
+umapgnf
+umapgptm
+umapgs
+```
+
+
+```{r}
+#| label: gf-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of GeneFormer"
+#| fig-subcap:
+#|   - "Nuclear Fraction"
+#|   - "MALAT1"
+#|   - "cell_id"
+#| fig-cap-location: top
+#| include: false
+
+umapgfnf
+umapgfm
+umapgfs
 ```
 
 ```{r}
@@ -148,8 +220,7 @@ if (has_malat1) {
 #| fig-height: 6
 #| eval: !expr has_malat1
 
-if (has_malat1) {
-  print(plotExpression(sce,
+plotExpression(sce,
                  features = "MALAT1",
                  x = "nuclear_fraction",
                  other_fields = "cell_id",
@@ -159,8 +230,8 @@ if (has_malat1) {
     theme_minimal() +
     labs(title = "MALAT1 Expression vs Nuclear Fraction per cell identity",
          x = "Nuclear Fraction",
-         y = "MALAT1 Expression (logcounts)"))
-}
+         y = "MALAT1 Expression (logcounts)")
+
 ```
 
 ## Empty Droplet and Damaged Cell Identification

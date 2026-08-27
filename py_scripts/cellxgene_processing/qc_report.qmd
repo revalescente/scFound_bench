@@ -1,0 +1,195 @@
+---
+title: "CELLxGENE QC Summary Report"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    embed-resources: true
+    theme: flatly
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+library(DT)
+library(knitr)
+library(fs)
+
+# Percorso principale dove sono salvati i file RDS
+data_dir <- "/projects/shared/cellxgene_split_by_dataset"
+
+# Scansione di tutti i file di output
+rds_files <- dir_ls(data_dir, recurse = TRUE, glob = "*_qc_metrics.rds")
+
+cat("Numero di file RDS trovati:", length(rds_files), "\n")
+```
+
+```{r load-data}
+# 1. Caricamento file RDS
+all_results <- map(rds_files, readRDS)
+
+# 2. Aggregazione Summary Globale (summary è già un dataframe)
+df_summary <- map_dfr(all_results, ~ .x$summary)
+
+# 3. Aggregazione Bias Tipi Cellulari
+df_celltypes <- map_dfr(all_results, function(x) {
+  if (is.null(x$celltype_bias) || NROW(x$celltype_bias) == 0) return(NULL)
+  
+  as.data.frame(x$celltype_bias) %>%
+    mutate(
+      Tissue = x$summary$Tissue,
+      Dataset_ID = x$summary$Dataset_ID
+    )
+})
+
+# 4. Aggregazione Statistiche MALAT1 (convertito in data.frame a 1 riga)
+df_malat1 <- map_dfr(all_results, function(x) {
+  ms <- x$malat1_stats
+  if (is.null(ms) || length(ms) == 0) return(NULL)
+  
+  as.data.frame(as.list(ms)) %>%
+    mutate(
+      Tissue = x$summary$Tissue,
+      Dataset_ID = x$summary$Dataset_ID,
+      .before = 1
+    )
+})
+
+# 5. Aggregazione Statistiche EmptyDrops (uso di NROW per gestire vettori e matrici)
+df_emptydrops <- map_dfr(all_results, function(x) {
+  has_ed <- !is.null(x$emptydrops_res) && length(x$emptydrops_res) > 0
+  
+  # NROW restituisce la lunghezza se è un vettore, o il numero di righe se è una matrice/df
+  n_tested <- if (has_ed) NROW(x$emptydrops_res) else NA_integer_
+  
+  tibble(
+    Tissue         = x$summary$Tissue,
+    Dataset_ID     = x$summary$Dataset_ID,
+    EmptyDrops_Ran = has_ed,
+    Pass_Pct       = ifelse(is.null(x$summary$EmptyDrops_Pass_Pct), NA, x$summary$EmptyDrops_Pass_Pct),
+    Total_Tested   = n_tested
+  )
+})
+```
+
+# 1. Panoramica Generale (Global Metrics)
+
+```{r global-overview}
+global_stats <- df_summary %>%
+  summarise(
+    Total_Datasets = n(),
+    Total_Tissues = n_distinct(Tissue),
+    Total_Cells = sum(Total_Cells, na.rm = TRUE),
+    Total_Kept_Cells = sum(Kept_Cells, na.rm = TRUE),
+    Total_Discarded_Cells = sum(Discarded_Cells, na.rm = TRUE),
+    Mean_Kept_Pct = round(mean(Kept_Pct, na.rm = TRUE), 2),
+    Median_Kept_Pct = round(median(Kept_Pct, na.rm = TRUE), 2)
+  )
+
+kable(global_stats, caption = "Statistiche Generali dell'intero Dataset")
+```
+
+---
+
+# 2. Sintesi per Tessuto (Tissue Summary)
+
+```{r tissue-summary}
+tissue_summary <- df_summary %>%
+  group_by(Tissue) %>%
+  summarise(
+    N_Datasets = n(),
+    Total_Cells = sum(Total_Cells, na.rm = TRUE),
+    Kept_Cells = sum(Kept_Cells, na.rm = TRUE),
+    Mean_Kept_Pct = round(mean(Kept_Pct, na.rm = TRUE), 2),
+    Mean_MT_Thresh = round(mean(MT_Threshold, na.rm = TRUE), 4),
+    Median_UMI = median(Median_UMI, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Total_Cells))
+
+datatable(
+  tissue_summary,
+  options = list(pageLength = 15, autoWidth = TRUE),
+  caption = "Aggregazione Metriche QC divise per Tessuto"
+)
+```
+
+---
+
+# 3. Dettaglio Metriche per Singolo Dataset
+
+```{r dataset-table}
+datatable(
+  df_summary,
+  filter = "top",
+  extensions = 'Buttons',
+  options = list(
+    pageLength = 10,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  caption = "Tabella Interattiva: Metriche QC per ogni Dataset"
+)
+```
+
+---
+
+# 4. Bias sui Tipi Cellulari (Cell Type Bias)
+
+```{r celltype-bias}
+celltype_summary <- df_celltypes %>%
+  group_by(CellType, Tissue, Dataset_ID) %>%
+  summarise(
+    Total_Cells = sum(Total, na.rm = TRUE),
+    Kept_Cells = sum(Kept, na.rm = TRUE),
+    Discarded_Cells = sum(Discarded, na.rm = TRUE),
+    Overall_Kept_Pct = round((Kept_Cells / Total_Cells) * 100, 2),
+    .groups = "drop"
+  ) %>%
+  filter(Total_Cells > 100) %>%
+  arrange(Overall_Kept_Pct)
+
+datatable(
+  celltype_summary,
+  filter = "top",
+  options = list(pageLength = 15, autoWidth = TRUE),
+  caption = "Tassi di Ritenzione per Tipo Cellulare, Tessuto e Dataset (> 100 cellule)"
+)
+```
+
+---
+
+# 5. Monitoraggio Espressione MALAT1
+
+```{r malat1-summary}
+if (ncol(df_malat1) > 2) {
+  datatable(
+    df_malat1,
+    filter = "top",
+    options = list(pageLength = 10),
+    caption = "Distribuzione dei Conteggi del Gene MALAT1"
+  )
+} else {
+  cat("Nessun dato MALAT1 trovato nei dataset.")
+}
+```
+
+---
+
+# 6. Stato di Esecuzione EmptyDrops
+
+```{r emptydrops-summary}
+emptydrops_overview <- df_emptydrops %>%
+  group_by(Tissue) %>%
+  summarise(
+    Total_Datasets = n(),
+    Datasets_with_EmptyDrops = sum(EmptyDrops_Ran),
+    Mean_Pass_Pct = round(mean(Pass_Pct, na.rm = TRUE), 2)
+  )
+
+kable(emptydrops_overview, caption = "Riepilogo Esecuzione EmptyDrops per Tessuto")
+```
