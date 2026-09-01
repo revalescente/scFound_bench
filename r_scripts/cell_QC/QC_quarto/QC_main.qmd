@@ -1,0 +1,52 @@
+---
+title: "`r paste('QC Analysis for', params$dataset, 'Dataset')`"
+author: "Valerio Reffo"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    theme: cosmo
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+params:
+  dataset: "BE1"
+  save_result: true
+---
+
+```{r}
+#| label: setup-libraries
+#| message: false
+#| warning: false
+
+library(DropletQC)
+library(purrr)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(scuttle)
+library(scran)
+library(scater)
+library(anndataR)
+library(SingleCellExperiment)
+```
+
+{{< include _setup_config.qmd >}}
+{{< include _add_info.qmd >}}
+
+```{r}
+#| label: add-info-text-dynamic
+#| echo: false
+#| results: asis
+
+# (Opzionale) Include solo il testo markdown/note specifico per dataset se esiste
+info_file <- paste0("modules/_notes_", params$dataset, ".qmd")
+if (file.exists(info_file)) {
+  cat(knitr::knit_child(info_file, quiet = TRUE))
+}
+```
+
+{{< include _QC_template.qmd >}}
