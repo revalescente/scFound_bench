@@ -45,3 +45,5 @@ outputs/
 logs/
 .ipynb_checkpoints/
 scFoundation/
+
+.DS_Store
