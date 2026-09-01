@@ -142,7 +142,7 @@ datatable(
 
 ```{r celltype-bias}
 celltype_summary <- df_celltypes %>%
-  group_by(CellType, Tissue, Dataset_ID) %>%
+  group_by(CellType, Tissue) %>%
   summarise(
     Total_Cells = sum(Total, na.rm = TRUE),
     Kept_Cells = sum(Kept, na.rm = TRUE),

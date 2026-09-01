@@ -6,7 +6,7 @@ from pathlib import Path
 
 def main():
     # Define paths for model, input dataset, and output directory
-    model_dir = "/software/huggingface/hub/models--ctheodoris--Geneformer/snapshots/04c2b2e84da7c0f385c3f9ad8f3ec24bab6650e5/Geneformer-V2-104M/"
+    model_dir = "/software/apps/huggingface/hub/models--ctheodoris--Geneformer/snapshots/04c2b2e84da7c0f385c3f9ad8f3ec24bab6650e5/Geneformer-V2-104M/"
     input_data_dir = (
         "/projects/shared/intronic_bam/datasets/geneformer/mix.dataset"
     )
