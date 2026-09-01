@@ -12,6 +12,7 @@ format:
 execute:
   warning: false
   message: false
+  cache: true
 params:
   dataset: "BE1"
   save_result: true

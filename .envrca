@@ -1,0 +1,1 @@
+./sync2NowWhat.sh > .NowWhat_sync.log 2>&1 & disown
