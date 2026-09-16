@@ -40,6 +40,7 @@ sce <- sce |>
 
 ```{r}
 #| label: set-feature-flags
+#| include: false
 
 # Rilevamento automatico delle funzionalità presenti
 has_geneformer <- "GeneFormer" %in% reducedDimNames(sce)

@@ -1,0 +1,375 @@
+---
+title: "All GeneFormer embeddings analysis"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    embed-resources: true
+    theme: flatly
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| message: false
+#| warning: false
+library(SingleCellExperiment)
+library(data.table)
+library(purrr)
+library(scater)
+```
+# Lettura sce be1
+
+```{r}
+sce <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
+```
+
+
+# Configurazione percorsi e parametri
+
+```{r}
+data_dir <- "/projects/shared/intronic_bam/datasets/embeddings/geneformer_layers/be1"
+dataset_name <- "be1"
+meta_cols <- c("Barcode", "Sample")
+layers <- set_names(0:12, paste0("geneformer_layer_", 0:12))
+```
+
+# 1. Lettura di tutti i file CSV tramite purrr::map
+
+```{r}
+layer_dt_list <- map(layers, ~ {
+  file_path <- file.path(data_dir, sprintf("%s_geneformer_layer_%d.csv", dataset_name, .x))
+  
+  # Forzare header = TRUE assicura che la prima riga venga usata per i nomi colonna
+  dt <- fread(file_path, header = TRUE)
+  
+  # Individua le colonne numeriche dell'embedding
+  emb_cols <- setdiff(names(dt), meta_cols)
+  
+  # Rinomina 0, 1, 2... in emb_0, emb_1, emb_2...
+  new_emb_names <- paste0("emb_", seq_along(emb_cols) - 1)
+  setnames(dt, old = emb_cols, new = new_emb_names)
+  
+  dt
+})
+```
+
+# 2. Estrazione metadati dal primo dataset caricato
+
+```{r}
+first_dt <- layer_dt_list[[1]]
+first_dt[1:5, 1:5]
+```
+
+
+
+```{r}
+present_meta <- intersect(meta_cols, names(first_dt))
+cell_metadata <- as.data.frame(first_dt[, ..present_meta])
+rownames(cell_metadata) <- cell_metadata$Barcode
+```
+
+## Setup parametri UMAP
+
+Ultimo layer ready
+```{r}
+emb_cols <- setdiff(names(layer_dt_list$geneformer_layer_12), meta_cols)
+  
+emb_last <- as.matrix(layer_dt_list$geneformer_layer_12[, ..emb_cols])
+rownames(emb_last) <- layer_dt_list$geneformer_layer_12$Barcode
+```
+
+Parametri UMAP test
+```{r}
+SEED_VALUE <- 42
+nums_neigh <- c(15, 50, 70)
+min_dists  <- c(0.01, 0.1, 0.3)
+metrics    <- c("euclidean", "cosine")
+```
+
+Test sull'ultimo layer
+```{r}
+# 1. Creazione della griglia e correzione metrica ("cosin" -> "cosine")
+param_grid <- tidyr::crossing(
+  n_neighbors = nums_neigh,
+  min_dist    = min_dists,
+  metric      = metrics
+)
+
+# 2. Calcolo UMAP su ogni combinazione usando pmap
+umap_results <- pmap(param_grid, function(n_neighbors, min_dist, metric) {
+  set.seed(SEED_VALUE)
+  
+  scater::calculateUMAP(
+    emb_last,
+    transposed  = TRUE,
+    pca         = NULL,
+    n_neighbors = n_neighbors,
+    min_dist    = min_dist,
+    metric      = metric,
+    n_threads   = 1
+  )
+}) |> 
+  set_names(paste0("n", param_grid$n_neighbors, "_d", param_grid$min_dist, "_m", param_grid$metric))
+```
+
+## visualizzazione dei risultati di test
+
+```{r}
+# 1. Estrai il vettore dei colori
+sample_labels <- SummarizedExperiment::colData(sce)$Sample
+
+# 2. Genera i plot con solo punti e titolo
+plot_list <- imap(umap_results, function(mat, name) {
+  
+  df <- data.frame(
+    UMAP1 = mat[, 1],
+    UMAP2 = mat[, 2],
+    Color = sample_labels
+  )
+  
+  df <- df[!is.na(df$Color), ]
+  
+  ggplot(df, aes(x = UMAP1, y = UMAP2, color = Color)) +
+    geom_point(size = 0.1, alpha = 0.5) +
+    ggtitle(name) +
+    theme_void() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 9),
+      legend.position = "none"
+    )
+})
+```
+
+```{r}
+patchwork::wrap_plots(plot_list, ncol = 6)
+```
+Non cambia gran che, starei sui 30 neighbors, 0.3 distanza, metrica euclidea.
+cerchiamo un buon seed per cell_status
+
+```{r}
+seeds <- c(11, 42, 1, 3, 1239, 57424981)
+N_NEIGHBORS <- 30
+MIN_DIST    <- 0.3
+METRIC      <- "euclidean"
+```
+
+
+```{r}
+umap_results <- map(seeds, function(seme) {
+  set.seed(seme)
+  
+  scater::calculateUMAP(
+    emb_last,
+    transposed  = TRUE,
+    pca         = NULL,
+    n_neighbors = N_NEIGHBORS,
+    min_dist    = MIN_DIST,
+    metric      = METRIC,
+    n_threads   = 1
+  )
+}) |> 
+  set_names(paste0("seed_", seeds))
+```
+
+```{r}
+plot_list <- imap(umap_results, function(mat, name) {
+  
+  # Estrae gli ID delle cellule dalla matrice UMAP
+  cell_ids <- rownames(mat)
+  
+  # Associa la colonna cell_status usando il matching sugli ID se presenti,
+  # altrimenti assume l'ordine posizionale
+  color_vec <- if (!is.null(cell_ids) && !is.null(colnames(sce))) {
+    sce$cell_status[match(cell_ids, colnames(sce))]
+  } else {
+    sce$cell_status
+  }
+  
+  df <- data.frame(
+    UMAP1 = mat[, 1],
+    UMAP2 = mat[, 2],
+    Color = color_vec
+  )
+  
+  df <- df[!is.na(df$Color), ]
+  
+  ggplot(df, aes(x = UMAP1, y = UMAP2, color = Color)) +
+    geom_point(size = 0.1, alpha = 0.5) +
+    ggtitle(name) +
+    theme_void() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 9),
+      legend.position = "none"
+    )
+})
+
+patchwork::wrap_plots(plot_list, ncol = 3)
+```
+
+non cambia nulla perchè apparentemente c'è il parametro init = "Spectral" che fissa
+l'inizializzazione in modo deterministico, il seed influenza solo l'ordine di campionamento delle coppie dei punti durante il Stochastic Gradient Descent (secondo GEMINI)
+
+verifichiamo con init = "rand"
+
+```{r}
+umap_results <- map(seeds, function(seme) {
+  set.seed(seme)
+  
+  scater::calculateUMAP(
+    emb_last,
+    transposed  = TRUE,
+    pca         = NULL,
+    n_neighbors = N_NEIGHBORS,
+    min_dist    = MIN_DIST,
+    metric      = METRIC,
+    init        = "random", # Forza l'inizializzazione casuale
+    n_threads   = 1
+  )
+}) |> 
+  set_names(paste0("seed_", seeds))
+```
+
+```{r}
+plot_list <- imap(umap_results, function(mat, name) {
+  
+  # Estrae gli ID delle cellule dalla matrice UMAP
+  cell_ids <- rownames(mat)
+  
+  # Associa la colonna cell_status usando il matching sugli ID se presenti,
+  # altrimenti assume l'ordine posizionale
+  color_vec <- if (!is.null(cell_ids) && !is.null(colnames(sce))) {
+    sce$cell_status[match(cell_ids, colnames(sce))]
+  } else {
+    sce$cell_status
+  }
+  
+  df <- data.frame(
+    UMAP1 = mat[, 1],
+    UMAP2 = mat[, 2],
+    Color = color_vec
+  )
+  
+  df <- df[!is.na(df$Color), ]
+  
+  ggplot(df, aes(x = UMAP1, y = UMAP2, color = Color)) +
+    geom_point(size = 0.1, alpha = 0.5) +
+    ggtitle(name) +
+    theme_void() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 9),
+      legend.position = "none"
+    )
+})
+
+patchwork::wrap_plots(plot_list, ncol = 3)
+```
+
+
+
+# 4. Calcolo UMAP
+
+Parametri UMAP per replicabilità
+```{r}
+SEED_VALUE  <- 42
+N_NEIGHBORS <- 30
+MIN_DIST    <- 0.3
+METRIC      <- "euclidean"
+```
+
+## Calcolo UMAP streaming per singolo layer tramite scater::calculateUMAP
+
+```{r}
+umap_matrices_list <- map(layers, function(layer_name) {
+  l_num <- as.numeric(gsub("UMAP_layer_", "", layer_name))
+  file_path <- file.path(data_dir, sprintf("%s_geneformer_layer_%d.csv", dataset_name, l_num))
+  
+  # Lettura veloce del file CSV
+  dt <- fread(file_path, header = TRUE)
+  emb_cols <- setdiff(names(dt), meta_cols)
+  
+  emb_matrix <- as.matrix(dt[, ..emb_cols])
+  rownames(emb_matrix) <- dt$Barcode
+  
+  # Impostazione del seed prima dell'esecuzione
+  set.seed(SEED_VALUE)
+  
+  # Calcolo UMAP con scater
+  # - transposed = TRUE: specifica che le righe rappresentano le cellule
+  # - pca = NULL: esegue UMAP direttamente sugli embedding di Geneformer
+  umap_2d <- scater::calculateUMAP(
+    x = emb_matrix,
+    transposed = TRUE,
+    pca = NULL,
+    n_neighbors = N_NEIGHBORS,
+    min_dist = MIN_DIST,
+    metric = METRIC,
+    n_threads = 1 # Garantisce il determinismo bit-a-bit
+  )
+  
+  colnames(umap_2d) <- c("UMAP1", "UMAP2")
+  rownames(umap_2d) <- dt$Barcode
+  
+  message(sprintf("✓ Calcolata UMAP con scater per Layer %d", l_num))
+  
+  umap_2d
+})
+```
+
+# 5. Creazione SingleCellExperiment ultraleggero
+
+```{r}
+umap_matrices_list <- map(umap_matrices_list, function(mat) {
+  mat[colnames(sce), , drop = FALSE]
+})
+reducedDims(sce) <- c(reducedDims(sce), umap_matrices_list)
+reducedDimNames(sce)
+```
+
+Function to plot the list colored by something
+```{r}
+colPlot <- function(obj, dim_name = NULL, color = "Sample") {
+  layer_title <- gsub("UMAP_layer_", "Layer ", dim_name)
+  
+  vals <- scater::retrieveCellInfo(obj, color)$val
+  
+  scater::plotReducedDim(
+    obj[, !is.na(vals)],
+    dimred = dim_name, 
+    colour_by = color,
+    point_size = 0.1,
+    point_alpha = 0.5
+  ) +
+    ggtitle(layer_title) +
+    theme_minimal(base_size = 9) +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      legend.position = "none",
+      axis.title = element_blank() # Rimuove le etichette assi per una griglia più pulita
+    )
+}
+```
+
+
+```{r}
+plot_umap_sample <- map(grep("geneformer_layer", reducedDimNames(sce), value = TRUE), function(dim_name) {
+  colPlot(sce, dim_name = dim_name, color = "Sample")
+})
+
+plot_umap_cellstatus <- map(grep("geneformer_layer", reducedDimNames(sce), value = TRUE), function(dim_name) {
+  colPlot(sce, dim_name = dim_name, color = "cell_status")
+})
+```
+
+```{r}
+walk(plot_umap_sample, print)
+```
+
+```{r}
+walk(plot_umap_cellstatus, print)
+```
+

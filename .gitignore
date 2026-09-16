@@ -45,3 +45,9 @@ outputs/
 logs/
 .ipynb_checkpoints/
 scFoundation/
+*_cache/
+*_files/
+*.knit.md
+*.utf8.md
+**/.models/
+.models/

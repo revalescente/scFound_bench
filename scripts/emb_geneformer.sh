@@ -28,12 +28,12 @@ nvidia-smi --query-gpu=timestamp,name,utilization.gpu,utilization.memory,memory.
 GPU_PID=$!
 
 # Tokenization of the input data
-echo "Tokenizing input data..."
-python /home/vreffo/scFound_bench/py_scripts/Geneformer/cordblood/tokenizer.py
+#echo "Tokenizing input data..."
+#python /home/vreffo/scFound_bench/py_scripts/Geneformer/cordblood/tokenizer.py
 
 # Embedding extraction
 echo "Starting Geneformer embedding extraction..."
-python /home/vreffo/scFound_bench/py_scripts/Geneformer/cordblood/emb_extraction.py
+python /home/vreffo/scFound_bench/py_scripts/Geneformer/embeds_extraction/all_embeds.py
 
 # Stop GPU monitoring
 kill $GPU_PID

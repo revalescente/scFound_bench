@@ -6,7 +6,7 @@ format:
   html:
     toc: true
     toc-depth: 3
-    code-fold: show
+    code-fold: true
     theme: cosmo
     embed-resources: true
 execute:
@@ -50,7 +50,6 @@ nf_list <- imap(samples, \(sample, name) {
 names(nf_list) <- samples
 ```
 
-
 ```{r}
 #| label: load-sce
 
@@ -59,7 +58,9 @@ sce_be1
 ```
 
 #### scGPT embeddings
+
 Let's read the anndata with the embeddings matrix
+
 ```{r}
 #| label: anndata-read
 #| eval: false
@@ -68,6 +69,7 @@ be_ann <- read_h5ad("/projects/shared/intronic_bam/datasets/anndata/be1_scGPT_em
 ```
 
 Add it into the reducedDim slot of the sce
+
 ```{r}
 #| label: embeddings-add
 #| eval: false
@@ -99,7 +101,6 @@ reducedDim(sce_be1, "GeneFormer") <- emb_gf[match(as.character(colnames(sce_be1)
 
 ```
 
-
 ### Mapping Nuclear Fraction to `colData`
 
 We merge the individual nuclear fraction data frames into a single object, ensuring that the constructed cell keys perfectly match the `colnames` of our SCE object.
@@ -124,7 +125,7 @@ head(colData(sce_be1)[, c("Sample", "Barcode", "nuclear_fraction")])
 table(sce_be1$Sample)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Exploratory Analysis
 
@@ -132,28 +133,34 @@ We visualize the distribution of the nuclear fraction across different samples a
 
 ```{r}
 #| label: plot-distributions
-#| fig-width: 10
-#| fig-height: 6
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Distribution of Nuclear Fraction - BE1 Dataset by Cell Identity"
+#|   - "UMI Counts vs Nuclear Fraction"
 
-# Nuclear fraction distribution by sample identity
-p <- ggplot(as.data.frame(colData(sce_be1)), aes(x = nuclear_fraction))
-
-p + geom_density(fill = "lightblue", alpha = 0.5) +
+# Primo grafico: Distribuzione di densità
+p1 <- ggplot(as.data.frame(colData(sce_be1)), aes(x = nuclear_fraction)) +
+  geom_density(fill = "lightblue", alpha = 0.5) +
   facet_wrap(~Sample) +
   theme_minimal() +
-  labs(title = "Distribution of Nuclear Fraction - BE1 Dataset by Cell Identity",
-       x = "Nuclear Fraction")
+  labs(
+    x = "Nuclear Fraction"
+  )
 
-# UMI counts vs Nuclear Fraction distribution
-p + aes(y = log10(sum), colour = Sample) +
+# Secondo grafico: Scatter plot UMI vs Nuclear Fraction
+p2 <- ggplot(as.data.frame(colData(sce_be1)), aes(x = nuclear_fraction, y = log10(sum), colour = Sample)) +
   geom_point(alpha = 0.4, size = 0.6) +
   theme_minimal() +
-  labs(title = "UMI Counts vs Nuclear Fraction",
-       x = "Nuclear Fraction",
-       y = "log10(UMI Sum)")
+  labs(
+    x = "Nuclear Fraction",
+    y = "log10(UMI Sum)"
+  )
+
+p1
+p2
 ```
 
----
+------------------------------------------------------------------------
 
 ## Normalization and Dimensionality Reduction
 
@@ -193,13 +200,16 @@ sce_be1 <- runUMAP(sce_be1, dimred = "GeneFormer", name = "UMAP_GeneFormer")
 reducedDimNames(sce_be1)[reducedDimNames(sce_be1) == "UMAP_embed"] <- "UMAP_scGPT"
 ```
 
-
 ### Visualizing Embeddings (PCA vs UMAP)
 
 We compare the embedding spaces side-by-side, coloring cells by Sample and Nuclear Fraction using `patchwork`.
 
 ```{r}
 #| label: plot-dimred
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Distribution of Nuclear Fraction - BE1 Dataset by Cell Identity"
+#|   - "UMI Counts vs Nuclear Fraction"
 
 # Cell identity - UMAP + PCA
 umapsm <- plotUMAP(sce_be1, colour_by = "Sample", dimred = "UMAP") +
@@ -257,7 +267,7 @@ umapgfnf <- plotUMAP(sce_be1, colour_by = "nuclear_fraction", dimred = "UMAP_Gen
 (umapgs | umapgnf) / (umapgfs | umapgfnf)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Focus on MALAT1 and Nuclear Fraction Relationship
 
@@ -304,7 +314,6 @@ umapgfnf | umapgfm | umapgfs
 umapm | umapnf | umapsm
 ```
 
-
 ### MALAT1 vs Nuclear Fraction Scatter Plot Faceted by Sample
 
 ```{r}
@@ -325,7 +334,7 @@ plotExpression(sce_be1,
        y = "MALAT1 Expression (logcounts)")
 ```
 
----
+------------------------------------------------------------------------
 
 ### Detecting Empty Droplets and Damaged cells with `DropletQC`
 
@@ -351,7 +360,6 @@ nf_umi <- nf_umi[!is.na(nf_umi$nf),]
 cb_be1 <- identify_empty_drops(nf_umi = nf_umi, include_plot = TRUE)
 ```
 
-
 ```{r}
 #| label: cell-status-prop
 # Summary table of cell status
@@ -371,7 +379,6 @@ sce_be1$cell_status <- cb_be1[colnames(sce_be1), "cell_status"]
 ```{r}
 table(sce_be1$Sample, sce_be1$cell_status)
 ```
-
 
 ```{r}
 p1 <- sce_be1[, !is.na(sce_be1$cell_status)] |>
@@ -402,9 +409,6 @@ p2 <- sce_be1[, !is.na(sce_be1$cell_status)] |>
 
 p1 | p2
 ```
-
-
-
 
 ### Damaged Cell Identification
 

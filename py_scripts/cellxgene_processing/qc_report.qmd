@@ -1,0 +1,439 @@
+---
+title: "CELLxGENE QC Summary Report"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    embed-resources: true
+    theme: flatly
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+library(DT)
+library(knitr)
+library(fs)
+library(ggplot2)
+```
+
+```{r setup}
+# Percorso principale dove sono salvati i file RDS
+data_dir <- "/projects/shared/cellxgene_split_by_dataset"
+
+# Scansione di tutti i file di output
+rds_files <- dir_ls(data_dir, recurse = TRUE, glob = "*_qc_metrics.rds")
+
+cat("Numero di file RDS trovati:", length(rds_files), "\n")
+```
+
+```{r load-data}
+# 1. Caricamento file RDS
+all_results <- map(rds_files, readRDS)
+
+# 2. Aggregazione Summary Globale (summary è già un dataframe)
+df_summary <- map_dfr(all_results, ~ .x$summary)
+
+# 3. Aggregazione Bias Tipi Cellulari
+df_celltypes <- map_dfr(all_results, function(x) {
+  if (is.null(x$celltype_bias) || NROW(x$celltype_bias) == 0) return(NULL)
+  
+  as.data.frame(x$celltype_bias) %>%
+    mutate(
+      Tissue = x$summary$Tissue,
+      Dataset_ID = x$summary$Dataset_ID
+    )
+})
+
+# 4. Aggregazione Statistiche MALAT1 (convertito in data.frame a 1 riga)
+df_malat1 <- map_dfr(all_results, function(x) {
+  ms <- x$malat1_stats
+  if (is.null(ms) || length(ms) == 0) return(NULL)
+  
+  as.data.frame(as.list(ms)) %>%
+    mutate(
+      Tissue = x$summary$Tissue,
+      Dataset_ID = x$summary$Dataset_ID,
+      .before = 1
+    )
+})
+
+# 5. Aggregazione Statistiche EmptyDrops (uso di NROW per gestire vettori e matrici)
+df_emptydrops <- map_dfr(all_results, function(x) {
+  has_ed <- !is.null(x$emptydrops_res) && length(x$emptydrops_res) > 0
+  
+  # NROW restituisce la lunghezza se è un vettore, o il numero di righe se è una matrice/df
+  n_tested <- if (has_ed) NROW(x$emptydrops_res) else NA_integer_
+  
+  tibble(
+    Tissue         = x$summary$Tissue,
+    Dataset_ID     = x$summary$Dataset_ID,
+    EmptyDrops_Ran = has_ed,
+    Pass_Pct       = ifelse(is.null(x$summary$EmptyDrops_Pass_Pct), NA, x$summary$EmptyDrops_Pass_Pct),
+    Total_Tested   = n_tested
+  )
+})
+```
+
+# 1. Panoramica Generale (Global Metrics)
+
+```{r global-overview}
+global_stats <- df_summary %>%
+  summarise(
+    Total_Datasets = n(),
+    Total_Tissues = n_distinct(Tissue),
+    Total_Cells = sum(Total_Cells, na.rm = TRUE),
+    Total_Kept_Cells = sum(Kept_Cells, na.rm = TRUE),
+    Total_Discarded_Cells = sum(Discarded_Cells, na.rm = TRUE),
+    Mean_Kept_Pct = round(mean(Kept_Pct, na.rm = TRUE), 2),
+    Median_Kept_Pct = round(median(Kept_Pct, na.rm = TRUE), 2)
+  )
+
+kable(global_stats, caption = "Statistiche Generali dell'intero Dataset")
+```
+
+---
+
+# 2. Sintesi per Tessuto (Tissue Summary)
+
+```{r tissue-summary}
+tissue_summary <- df_summary %>%
+  group_by(Tissue) %>%
+  summarise(
+    N_Datasets = n(),
+    Total_Cells = sum(Total_Cells, na.rm = TRUE),
+    Kept_Cells = sum(Kept_Cells, na.rm = TRUE),
+    Mean_Kept_Pct = round(mean(Kept_Pct, na.rm = TRUE), 2),
+    Mean_MT_Thresh = round(mean(MT_Threshold, na.rm = TRUE), 4),
+    Median_UMI = median(Median_UMI, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Total_Cells))
+
+datatable(
+  tissue_summary,
+  options = list(pageLength = 15, autoWidth = TRUE),
+  caption = "Aggregazione Metriche QC divise per Tessuto"
+)
+```
+
+```{r}
+# Grafico a barre: Cellule Totali e Mantenute per Tessuto
+ggplot(tissue_summary, aes(x = reorder(Tissue, -Mean_Kept_Pct))) +
+  geom_col(aes(y = Total_Cells, fill = "Totali"), alpha = 0.7) +
+  geom_col(aes(y = Kept_Cells, fill = "Mantenute"), alpha = 0.9) +
+  scale_fill_manual(values = c("Totali" = "lightgray", "Mantenute" = "steelblue"), name = "Stato Cellule") +
+  theme_minimal() +
+  labs(title = "Cellule Totali e Mantenute per Tessuto", subtitle = "Tessuti ordinati in base alla % cellule non scartate", x = "Tessuto", y = "Numero di Cellule") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Grafico a barre: Percentuale media di cellule mantenute
+ggplot(tissue_summary, aes(x = reorder(Tissue, -Mean_Kept_Pct), y = Median_UMI)) +
+  geom_col(fill = "forestgreen") +
+  theme_minimal() +
+  labs(title = "Mediana dei conteggi delle reads", subtitle = "Tessuti ordinati in base alla % cellule non scartate", x = "Tessuto", y = "Median UMI") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+--------------------------------------------------------------------------------
+
+# 3. Dettaglio Metriche per Singolo Dataset
+
+```{r dataset-table}
+datatable(
+  df_summary,
+  filter = "top",
+  extensions = 'Buttons',
+  options = list(
+    pageLength = 10,
+    dom = 'Bfrtip',
+    buttons = c('copy', 'csv', 'excel')
+  ),
+  caption = "Tabella Interattiva: Metriche QC per ogni Dataset"
+)
+```
+
+---
+
+# 4. Bias sui Tipi Cellulari (Cell Type Bias)
+
+```{r celltype-bias}
+celltype_summary <- df_celltypes %>%
+  group_by(CellType, Tissue) %>%
+  summarise(
+    Total_Cells = sum(Total, na.rm = TRUE),
+    Kept_Cells = sum(Kept, na.rm = TRUE),
+    Discarded_Cells = sum(Discarded, na.rm = TRUE),
+    Overall_Kept_Pct = round((Kept_Cells / Total_Cells) * 100, 2),
+    .groups = "drop"
+  ) %>%
+  filter(Total_Cells > 100) %>%
+  arrange(Overall_Kept_Pct)
+
+datatable(
+  celltype_summary,
+  filter = "top",
+  options = list(pageLength = 15, autoWidth = TRUE),
+  caption = "Tassi di Ritenzione per Tipo Cellulare, Tessuto e Dataset (> 100 cellule)"
+)
+```
+
+```{r}
+# Istogramma: Distribuzione della percentuale di ritenzione dei tipi cellulari
+ggplot(celltype_summary, aes(x = Overall_Kept_Pct)) +
+  geom_histogram(binwidth = 5, fill = "coral", color = "black", alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "Distribuzione del Tasso di Ritenzione per Tipo Cellulare", 
+       x = "Percentuale di Ritenzione (%)", y = "Frequenza (N. di Tipi Cellulari)")
+
+```
+
+```{r}
+library(dplyr)
+
+# Selezioniamo i 5 tipi cellulari più frequenti per ciascun tessuto
+top_celltypes <- celltype_summary %>%
+  group_by(Tissue) %>%
+  slice_max(order_by = Total_Cells, n = 5) %>%
+  ungroup()
+
+# Grafico a barre sfaccettato per Tessuto
+ggplot(top_celltypes, aes(x = reorder(CellType, Total_Cells), y = Total_Cells, fill = Tissue)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~ Tissue, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Tipi Cellulari più Frequenti per Tessuto",
+    x = "Tipo Cellulare",
+    y = "Numero Totale di Cellule"
+  )
+```
+
+```{r}
+ggplot(top_celltypes, aes(x = reorder(CellType, Overall_Kept_Pct), y = Overall_Kept_Pct, fill = Tissue)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 80, linetype = "dashed", color = "red", alpha = 0.7) + # Soglia di riferimento (es. 80%)
+  coord_flip() +
+  facet_wrap(~ Tissue, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Tasso di Ritenzione dei Tipi Cellulari Principali per Tessuto",
+    subtitle = "La linea rossa indica la soglia dell'80% di ritenzione",
+    x = "Tipo Cellulare",
+    y = "% Ritenzione"
+  )
+```
+
+
+--------------------------------------------------------------------------------
+
+# 5. Monitoraggio Espressione MALAT1
+
+```{r malat1-summary}
+if (ncol(df_malat1) > 2) {
+  datatable(
+    df_malat1,
+    filter = "top",
+    options = list(pageLength = 10),
+    caption = "Distribuzione dei Conteggi del Gene MALAT1"
+  )
+} else {
+  cat("Nessun dato MALAT1 trovato nei dataset.")
+}
+```
+
+```{r}
+if (ncol(df_malat1) > 2) {
+  ggplot(df_malat1, aes(x = Mean)) + # <--- Inserisci qui il nome corretto della colonna
+    geom_histogram(bins = 30, fill = "purple", color = "black", alpha = 0.7) +
+    theme_minimal() +
+    labs(title = "Distribuzione dei Conteggi del Gene MALAT1", x = "Conteggi", y = "Frequenza")
+}
+
+```
+
+
+---
+
+# 6. Stato di Esecuzione EmptyDrops
+
+```{r emptydrops-summary}
+emptydrops_overview <- df_emptydrops %>%
+  group_by(Tissue) %>%
+  summarise(
+    Total_Datasets = n(),
+    Datasets_with_EmptyDrops = sum(EmptyDrops_Ran),
+    Mean_Pass_Pct = round(mean(Pass_Pct, na.rm = TRUE), 2)
+  )
+
+kable(emptydrops_overview, caption = "Riepilogo Esecuzione EmptyDrops per Tessuto")
+```
+
+```{r}
+ggplot(celltype_summary, aes(x = reorder(Tissue, Overall_Kept_Pct, FUN = median), y = Overall_Kept_Pct, fill = Tissue)) +
+  geom_boxplot(alpha = 0.6, show.legend = FALSE, outlier.shape = NA) +
+  geom_jitter(width = 0.2, alpha = 0.4, size = 1, color = "black") +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Distribuzione dei Tassi di Ritenzione Cellulare per Tessuto",
+    subtitle = "Ogni punto rappresenta un tipo cellulare nel rispettivo tessuto",
+    x = "Tessuto",
+    y = "% Ritenzione"
+  )
+
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidytext) # Utile per ordinare correttamente le barre dentro ogni singolo facet
+
+# 1. Calcoliamo la percentuale di ciascun tipo cellulare SUL TOTALE del rispettivo tessuto
+top_celltypes <- celltype_summary %>%
+  group_by(Tissue) %>%
+  mutate(Tissue_Total = sum(Total_Cells, na.rm = TRUE)) %>%
+  mutate(Pct_of_Tissue = round((Total_Cells / Tissue_Total) * 100, 2)) %>%
+  slice_max(order_by = Pct_of_Tissue, n = 5, with_ties = FALSE) %>%
+  ungroup()
+
+# -----------------------------------------------------------------------------
+# GRAFICO 1: Abbondanza Relativa (%) dei Tipi Cellulari per Tessuto
+# -----------------------------------------------------------------------------
+ggplot(top_celltypes, aes(
+  x = reorder_within(CellType, Pct_of_Tissue, Tissue), 
+  y = Pct_of_Tissue, 
+  fill = Tissue
+)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = paste0(Pct_of_Tissue, "%")), 
+            hjust = -0.1, size = 3) + # Aggiunge l'etichetta con la % accanto alla barra
+  coord_flip() +
+  scale_x_reordered() + 
+  facet_wrap(~ Tissue, scales = "free") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + # Spazio extra per le etichette
+  theme_minimal() +
+  labs(
+    title = "Top 5 Tipi Cellulari per Abbondanza Relativa",
+    subtitle = "Percentuale di ciascun tipo cellulare sul totale delle cellule del rispettivo tessuto",
+    x = "Tipo Cellulare",
+    y = "% sul Totale del Tessuto"
+  )
+
+# -----------------------------------------------------------------------------
+# GRAFICO 2: Tasso di Ritenzione (QC) sui Tipi Cellulari Principali
+# -----------------------------------------------------------------------------
+ggplot(top_celltypes, aes(
+  x = reorder_within(CellType, Overall_Kept_Pct, Tissue), 
+  y = Overall_Kept_Pct, 
+  fill = Tissue
+)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 80, linetype = "dashed", color = "red", alpha = 0.7) + # Soglia dell'80%
+  geom_text(aes(label = paste0(Overall_Kept_Pct, "%")), 
+            hjust = 1.1, color = "white", size = 3, fontface = "bold") +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~ Tissue, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Impatto del QC sui Tipi Cellulari Principali per Tessuto",
+    subtitle = "Percentuale di cellule mantenute dopo il QC (linea rossa = soglia 80%)",
+    x = "Tipo Cellulare",
+    y = "% Cellule Mantenute (QC)"
+  )
+
+```
+
+```{r}
+ggplot(df_malat1, aes(x = reorder(Tissue, Mean, FUN = median), y = Mean, fill = Tissue)) +
+  geom_boxplot(alpha = 0.7, show.legend = FALSE, outlier.shape = NA) +
+  geom_jitter(width = 0.2, size = 2, alpha = 0.8) +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Espressione Media di MALAT1 per Tessuto tra i Dataset",
+    x = "Tessuto",
+    y = "Conteggio Medio di MALAT1 per Dataset"
+  )
+
+```
+
+```{r}
+ggplot(df_malat1, aes(x = reorder(Dataset_ID, Mean), y = Mean, fill = Tissue)) +
+  geom_col() +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Livello Medio di MALAT1 per Dataset",
+    x = "Dataset ID",
+    y = "Conteggio Medio MALAT1"
+  )
+
+```
+
+```{r}
+#| fig-height: 10
+for (t in unique(celltype_summary$Tissue)) {
+  
+  df_tissue <- celltype_summary %>%
+    filter(Tissue == t) %>%
+    mutate(
+      Tissue_Total = sum(Total_Cells, na.rm = TRUE),
+      Pct_of_Tissue = round((Total_Cells / Tissue_Total) * 100, 2)
+    )
+  
+  p <- ggplot(df_tissue, aes(x = reorder(CellType, Pct_of_Tissue), y = Pct_of_Tissue)) +
+    geom_col(fill = "#2b5c8f") +
+    geom_text(aes(label = paste0(Pct_of_Tissue, "%")), hjust = -0.1, size = 3) +
+    coord_flip() +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+    theme_minimal() +
+    labs(
+      title = paste("Abbondanza Relativa (%) —", t),
+      subtitle = "Composizione percentuale di tutti i tipi cellulari",
+      x = "Tipo Cellulare",
+      y = "% sul Totale del Tessuto"
+    )
+  
+  print(p)
+}
+
+```
+
+```{r}
+#| fig-height: 10
+# Per ciascun tessuto generiamo un grafico dedicato con TUTTI i tipi cellulari
+for (t in unique(celltype_summary$Tissue)) {
+  
+  df_tissue <- celltype_summary %>%
+    filter(Tissue == t) %>%
+    mutate(Pct_Discarded = round((Discarded_Cells / Total_Cells) * 100, 2))
+  
+  p <- ggplot(df_tissue, aes(x = reorder(CellType, Pct_Discarded), y = Pct_Discarded)) +
+    geom_col(fill = "#d95f02") +
+    geom_text(aes(label = paste0(Pct_Discarded, "%")), hjust = -0.1, size = 3) +
+    coord_flip() +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+    theme_minimal() +
+    labs(
+      title = paste("QC: % Cellule Scartate —", t),
+      subtitle = "Tutti i tipi cellulari presenti nel tessuto",
+      x = "Tipo Cellulare",
+      y = "% Cellule Scartate dal QC"
+    )
+  
+  # FONDAMENTALE in Quarto/RMarkdown per stampare grafici dentro un ciclo for:
+  print(p) 
+}
+
+```
+

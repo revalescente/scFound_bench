@@ -6,32 +6,101 @@ table(colData(sce)$cell_id)
 
 ## Exploratory Analysis
 
+### Diagnostic plots
+
+Let's inspect the low quality cells identified with the standard procedure 
+
+```{r}
+#| label: cell2discard
+table(sce$cell_id, sce$discard)
+```
+
+
+```{r}
+#| label: diagn1
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Total count"
+#|   - "Total count per cell type"
+
+plotColData(sce, y = "sum", colour_by = "discard")
+plotColData(sce, y = "sum", x = "cell_id", colour_by = "discard")
+```
+
+```{r}
+#| label: diagn2
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Detected features"
+#|   - "Detected features per cell type"
+
+plotColData(sce, y = "detected", colour_by = "discard")
+plotColData(sce, y = "detected", x = "cell_id", colour_by = "discard")
+```
+
+```{r}
+#| label: diagn3
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Mito percent"
+#|   - "Mito percent per cell type"
+
+plotColData(sce, y = "subsets_Mito_percent", colour_by = "discard")
+plotColData(sce, y = "subsets_Mito_percent", x = "cell_id", colour_by = "discard")
+```
+
+```{r}
+plotColData(sce, x="sum", y="subsets_Mito_percent", colour_by="discard")
+plotColData(sce, x="detected", y="subsets_Mito_percent", colour_by="discard")
+```
+
+### Nuclear fraction exploration
+
 ```{r}
 #| label: plot-distributions
-#| fig-width: 10
-#| fig-height: 6
+#| layout-ncol: 2
+#| fig-cap:
+#|   - "Distribution of Nuclear Fraction by Cell Identity"
+#|   - "UMI Counts vs Nuclear Fraction"
 
-p <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction))
-
-p + geom_density(fill = "lightblue", alpha = 0.5) +
-  facet_wrap(~ cell_id) +
+# Primo grafico: Distribuzione di densità
+p1 <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction)) +
+  geom_density(fill = "lightblue", alpha = 0.5) +
+  facet_wrap(~cell_id) +
   theme_minimal() +
-  labs(title = paste("Distribution of Nuclear Fraction by cell identity"),
-       x = "Nuclear Fraction")
+  labs(
+    x = "Nuclear Fraction"
+  )
 
-p + aes(y = log10(sum), colour = "cell_id") +
+# Secondo grafico: Scatter plot UMI vs Nuclear Fraction
+p2 <- ggplot(as.data.frame(colData(sce)), aes(x = nuclear_fraction, y = log10(sum), colour = discard)) +
   geom_point(alpha = 0.6, size = 0.6) +
   theme_minimal() +
-  labs(title = paste("UMI Counts vs Nuclear Fraction by cell identity"),
-       x = "Nuclear Fraction",
-       y = "log10(UMI Sum)")
+  labs(
+    x = "Nuclear Fraction",
+    y = "log10(UMI Sum)"
+  )
+
+p1
+p2
 ```
+
+```{r}
+#| label: nf-discard
+#| layout-ncol: 1
+#| fig-cap:
+#|   - "Boxplot of nuclear fraction per cell identity coloured by low quality identity"
+
+plotColData(sce, y = "nuclear_fraction", x = "cell_id", colour_by = "discard")
+```
+
 
 ## Normalization and Dimensionality Reduction
 
 ```{r}
 #| label: dimensionality-reduction-pca
 #| eval: !expr '!"PCA" %in% SingleCellExperiment::reducedDimNames(sce)'
+#| cache: false
 
 sce <- logNormCounts(sce)
 dec <- modelGeneVar(sce)
@@ -44,102 +113,175 @@ sce <- runUMAP(sce, dimred = "PCA")
 ```{r}
 #| label: dimensionality-reduction-scgpt
 #| eval: !expr '!"UMAP_scGPT" %in% SingleCellExperiment::reducedDimNames(sce)'
+#| cache: false
 
-sce <- runUMAP(sce, dimred = "scGPT", name = "UMAP_scGPT")
+sce <- scater::runUMAP(sce, dimred = "scGPT", name = "UMAP_scGPT")
 ```
 
 
 ```{r}
 #| label: dimensionality-reduction-gf
-#| eval: !expr '!"UMAP_GeneFormer" %in% SingleCellExperiment::reducedDimNames(sce)'
+#| eval: !expr 'isTRUE(params$force_recompute_GF) || !"UMAP_GeneFormer" %in% SingleCellExperiment::reducedDimNames(sce)'
+#| cache: false
+set.seed(1)
+sce <- scater::runUMAP(sce, dimred = "GeneFormer", name = "UMAP_GeneFormer", init = "random")
+```
 
-sce <- runUMAP(sce, dimred = "GeneFormer", name = "UMAP_GeneFormer")
+```{r}
+#| label: helper-plot
+
+make_sc_plot <- function(type = c("umap", "pca"), colour, dimred = NULL, title, legend = "bottom") {
+  type <- match.arg(type)
+  
+  # Se dimred non è specificato, imposta il default corretto in base al tipo
+  if (is.null(dimred)) {
+    dimred <- if (type == "umap") "UMAP" else "PCA"
+  }
+  
+  plot_fn <- if (type == "umap") plotUMAP else plotPCA
+  
+  plot_fn(sce, colour_by = colour, dimred = dimred, rasterise = TRUE) +
+    theme(legend.position = legend) +
+    labs(title = title)
+}
 ```
 
 
 ```{r}
 #| label: plot-dimred
-#| fig-width: 12
-#| fig-height: 10
+#| cache: false
 
-umapsm <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP") +
-  theme(legend.position = "bottom") +
-  labs(title = "UMAP (PCA) colored by cell identity")
-pcasm  <- plotPCA(sce, colour_by = "cell_id") +
-  theme(legend.position = "none") +
-  labs(title = "PCA colored by cell identity")
+# PCA plots
+pcasm   <- make_sc_plot("pca",  "cell_id",          title = "PCA colored by cell identity", legend = "none")
+pcanf   <- make_sc_plot("pca",  "nuclear_fraction", title = "PCA colored by nuclear fraction", legend = "none")
 
-umapnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP") +
-  theme(legend.position = "bottom") +
-  labs(title = "UMAP (PCA) colored by nuclear fraction")
-pcanf  <- plotPCA(sce, colour_by = "nuclear_fraction") +
-  theme(legend.position = "none") +
-  labs(title = "PCA colored by nuclear fraction")
+# UMAP plots (Standard)
+umapsm  <- make_sc_plot("umap", "cell_id",          title = "UMAP (PCA) colored by cell identity")
+umapnf  <- make_sc_plot("umap", "nuclear_fraction", title = "UMAP (PCA) colored by nuclear fraction")
 
-umapgs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_scGPT") +
-  theme(legend.position = "bottom") +
-  labs(title = "UMAP (scGPT) colored by cell identity")
-umapgnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_scGPT") +
-  theme(legend.position = "bottom") +
-  labs(title = "UMAP (scGPT) colored by nuclear fraction")
+# UMAP plots (scGPT)
+umapgs  <- make_sc_plot("umap", "cell_id",          dimred = "UMAP_scGPT", title = "UMAP (scGPT) colored by cell identity")
+umapgnf <- make_sc_plot("umap", "nuclear_fraction", dimred = "UMAP_scGPT", title = "UMAP (scGPT) colored by nuclear fraction")
+```
 
-(pcasm | pcanf) / (umapsm | umapnf)
+
+```{r}
+#| label: plot-pca-nf
+#| layout-ncol: 2
+#| fig-cap: "Dimensionality Reduction: PCA and its UMAP"
+#| fig-subcap:
+#|   - "PCA for cell_id"
+#|   - "PCA for Nuclear Fraction"
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
+pcasm 
+pcanf
+umapsm
+umapnf
 ```
 
 ```{r}
 #| label: plot-umap-scgpt
-#| fig-width: 12
-#| fig-height: 5
+#| layout-ncol: 2
+#| fig-cap: "UMAP of scGPT colored by cell_id and Nuclear Fraction"
+#| fig-subcap:
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
 
-(umapgs | umapgnf)
+umapgs
+umapgnf
 ```
 
 ```{r}
-#| label: plot-umap-gf
-#| fig-width: 12
-#| fig-height: 5
+#| label: plot-umap-gf1
 #| eval: !expr has_geneformer
+#| cache: false
+umapgfs  <- make_sc_plot("umap", "cell_id",          dimred = "UMAP_GeneFormer", title = "UMAP (GeneFormer) colored by cell identity")
+umapgfnf <- make_sc_plot("umap", "nuclear_fraction", dimred = "UMAP_GeneFormer", title = "UMAP (GeneFormer) colored by nuclear fraction")
 
-if (has_geneformer) {
-  umapgfs <- plotUMAP(sce, colour_by = "cell_id", dimred = "UMAP_GeneFormer") +
-    theme(legend.position = "bottom") +
-    labs(title = "UMAP (GeneFormer) colored by cell identity")
-  umapgfnf <- plotUMAP(sce, colour_by = "nuclear_fraction", dimred = "UMAP_GeneFormer") +
-    theme(legend.position = "bottom") +
-    labs(title = "UMAP (GeneFormer) colored by nuclear fraction")
-  print(umapgfs | umapgfnf)
-}
+```
+
+
+```{r}
+#| label: plot-umap-gf2
+#| eval: !expr has_geneformer
+#| layout-ncol: 2
+#| fig-cap: "UMAP of GeneFormer colored by cell_id and Nuclear Fraction"
+#| fig-subcap:
+#|   - "UMAP for cell_id"
+#|   - "UMAP for Nuclear Fraction"
+#| fig-cap-location: top
+
+
+umapgfs
+umapgfnf
 ```
 
 ## Focus on MALAT1 and Nuclear Fraction Relationship
 
 ```{r}
 #| label: malat1-plots
-#| fig-width: 12
-#| fig-height: 5
 #| eval: !expr has_malat1
+#| cache: false
 
-if (has_malat1) {
-  umapm <- plotUMAP(sce, colour_by = "MALAT1") + theme(legend.position = "bottom") +
-    labs(title = "UMAP (PCA) colored by MALAT1 log expression")
-  umapgptm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
-    labs(title = "UMAP (scGPT) colored by MALAT1")
+umapm    <- make_sc_plot("umap", "MALAT1", title = "UMAP (PCA) colored by MALAT1 log expression")
+umapgptm <- make_sc_plot("umap", "MALAT1", dimred = "UMAP_scGPT",      title = "UMAP (scGPT) colored by MALAT1")
+umapgfm  <- make_sc_plot("umap", "MALAT1", dimred = "UMAP_GeneFormer", title = "UMAP (GeneFormer) colored by MALAT1")
+```
 
-  if (has_geneformer) {
-    umapgfm <- plotUMAP(sce, colour_by = "MALAT1", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
-      labs(title = "UMAP (GeneFormer) colored by MALAT1")
 
-    print(umapm | umapgfm | umapgptm)
-    print(umapgnf | umapgptm | umapgs)
-    print(umapgfnf | umapgfm | umapgfs)
-  } else {
-    print(pcanf | plotPCA(sce, colour_by = "MALAT1"))
-    print(umapnf | umapm)
-    print(umapm | umapgptm)
-    print(umapgnf | umapgptm | umapgs)
-  }
-  print(umapm | umapnf | umapsm)
-}
+```{r}
+#| label: malat1-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of MALAT1"
+#| fig-subcap:
+#|   - "UMAP of PCA"
+#|   - "UMAP of scGPT embeddings"
+#|   - "UMAP of GeneFormer embeddings"
+#| fig-cap-location: top
+
+
+umapm
+umapgptm
+umapgfm
+```
+
+
+```{r}
+#| label: gpt-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of scGPT"
+#| fig-subcap:
+#|   - "Nuclear Fraction"
+#|   - "MALAT1"
+#|   - "cell_id"
+#| fig-cap-location: top
+
+umapgnf
+umapgptm
+umapgs
+```
+
+
+```{r}
+#| label: gf-plots-1
+#| eval: !expr has_malat1
+#| layout-ncol: 3
+#| fig-cap: "UMAP of GeneFormer"
+#| fig-subcap:
+#|   - "Nuclear Fraction"
+#|   - "MALAT1"
+#|   - "cell_id"
+#| fig-cap-location: top
+
+
+umapgfnf
+umapgfm
+umapgfs
 ```
 
 ```{r}
@@ -148,19 +290,17 @@ if (has_malat1) {
 #| fig-height: 6
 #| eval: !expr has_malat1
 
-if (has_malat1) {
-  print(plotExpression(sce,
+plotExpression(sce,
                  features = "MALAT1",
                  x = "nuclear_fraction",
                  other_fields = "cell_id",
                  exprs_values = "logcounts") +
     facet_wrap(~ cell_id) +
-    aes(color = "cell_id") +
+    aes(color = "discard") +
     theme_minimal() +
     labs(title = "MALAT1 Expression vs Nuclear Fraction per cell identity",
          x = "Nuclear Fraction",
-         y = "MALAT1 Expression (logcounts)"))
-}
+         y = "MALAT1 Expression (logcounts)")
 ```
 
 ## Empty Droplet and Damaged Cell Identification
@@ -260,20 +400,25 @@ table(colData(sce)$cell_id, sce$cell_status)
 ```
 
 ```{r}
-#| label: umap-damaged-empty
+#| label: umap-damaged-empty1
+#| cache: false
+
+umapc    <- make_sc_plot("umap", "cell_status", title = "UMAP (PCA) colored by cell status")
+pcam     <- make_sc_plot("pca",  "cell_status", title = "PCA colored by cell status")
+umapec   <- make_sc_plot("umap", "cell_status", dimred = "UMAP_scGPT",      title = "UMAP (scGPT) colored by cell status")
+
+if (has_geneformer) {
+  umapeg   <- make_sc_plot("umap", "cell_status", dimred = "UMAP_GeneFormer", title = "UMAP (GeneFormer) colored by cell status")
+}
+```
+
+
+```{r}
+#| label: umap-damaged-empty2
 #| fig-width: 12
 #| fig-height: 10
 
-umapc <- plotUMAP(sce, colour_by = "cell_status") + theme(legend.position = "bottom") +
-  labs(title = "UMAP (PCA) colored by cell status")
-pcam  <- plotPCA(sce, colour_by = "cell_status") + theme(legend.position = "bottom") +
-  labs(title = "PCA colored by cell status")
-umapec <- plotUMAP(sce, colour_by = "cell_status", dimred = "UMAP_scGPT") + theme(legend.position = "bottom") +
-  labs(title = "UMAP (scGPT) colored by cell status")
-
 if (has_geneformer) {
-  umapeg <- plotUMAP(sce, colour_by = "cell_status", dimred = "UMAP_GeneFormer") + theme(legend.position = "bottom") +
-    labs(title = "UMAP (GeneFormer) colored by cell status")
   print((umapc | pcam) / (umapec | umapeg))
 } else {
   print(umapc | pcam | umapec)
@@ -306,6 +451,90 @@ if (!has_malat1) {
   print(umapec | umapgs)
 }
 ```
+
+# Compare standard QC with dropletQC results
+
+```{r}
+table(sce$discard, sce$cell_status)
+```
+
+
+# Testing MALAT1 
+
+First remove discarded cells
+
+```{r}
+sce <- sce[,sce$discard == FALSE]
+```
+
+Testing differential expression of MALAT1 between normal cells and empty droplets
+
+Function to DE
+```{r}
+#| label: edger_function
+
+run_edger_gene_test <- function(sce, 
+                                gene_target = "MALAT1", 
+                                group_col = "cell_status", 
+                                ref_group = "empty_droplet", 
+                                test_group = "cell",
+                                return_all = FALSE) # per avere l'intera tabella di espressione differenziale
+{
+  
+  # Controlla la presenza della colonna specificata
+  if (!group_col %in% colnames(colData(sce))) {
+    stop(paste("Errore: La colonna", group_col, "non è presente in colData."))
+  }
+  
+  # 1. Filtra l'oggetto SingleCellExperiment per le sole due condizioni
+  cells_mask <- colData(sce)[[group_col]] %in% c(ref_group, test_group)
+  sc_sub <- sce[, cells_mask]
+  
+  # Imposta il gruppo di riferimento (baseline)
+  gruppi <- factor(colData(sc_sub)[[group_col]], levels = c(ref_group, test_group))
+  
+  # 2. Crea l'oggetto DGEList
+  dge <- DGEList(counts = counts(sc_sub), group = gruppi, genes = rowData(sc_sub))
+  
+  # 3. Calcola fattori di normalizzazione e stima la dispersione
+  dge <- calcNormFactors(dge)
+  design <- model.matrix(~ gruppi)
+  dge <- estimateDisp(dge, design)
+  
+  # 4. Adatta il modello GLM QLF
+  fit <- glmQLFit(dge, design)
+  qlf <- glmQLFTest(fit, coef = 2)
+  
+  # 5. Estrai la tabella completa dei risultati
+  risultati <- topTags(qlf, n = Inf)$table
+  
+  # 6. Restituisci l'intera tabella o solo il gene target
+  if (return_all) {
+    return(risultati)
+  }
+  
+  has_gene_names <- "gene_names" %in% colnames(risultati)
+  if (has_gene_names) {
+    gene_res <- risultati[rownames(risultati) == gene_target | risultati$gene_names == gene_target, ]
+  } else {
+    gene_res <- risultati[rownames(risultati) == gene_target, ]
+  }
+  
+  if (nrow(gene_res) == 0) {
+    warning(paste("Il gene", gene_target, "non è stato trovato tra i risultati."))
+  }
+  
+  return(gene_res)
+}
+
+```
+
+```{r}
+#| label: deg_malat1
+malat1_res <- run_edger_gene_test(sce)
+print(malat1_res)
+```
+
 
 ```{r}
 #| label: save-object

@@ -3,8 +3,8 @@
 #SBATCH --partition=cpu
 #SBATCH --time=10:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=20
-#SBATCH --mem=40G
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=50G
 #SBATCH --output=/home/%u/scFound_bench/outputs/slurm-%j.out
 #SBATCH --error=/home/%u/scFound_bench/logs/slurm-%j.err
 
@@ -29,3 +29,8 @@ rstudio --ip 0.0.0.0 --port "$RSTUDIO_PORT"
 
 # How to call it: PORT=8888 sbatch --time=00:10:00 --ntasks=1 --cpus-per-task=10 --mem=1G \
 # --output=dirpath/slurm-%j.out --error=dirpath/slurm-%j.err filename.sbatch
+
+
+module load apptainer-bioconductor/3.23
+
+Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager"); BiocManager::install(c("DropletUtils", "scrapper"), ask = FALSE)'

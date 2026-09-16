@@ -24,7 +24,7 @@ library(EnsDb.Hsapiens.v75)
 ```
 
 ```{r}
-sc_mix <- readRDS("~/datasets/sc_mixology/sc_mix.RDS")
+sc_mix <- readRDS("/projects/shared/intronic_bam/datasets/sc_mixology/sc_mix.RDS")
 ```
 
 ```{r}

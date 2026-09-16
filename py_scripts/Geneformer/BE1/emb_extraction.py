@@ -20,7 +20,7 @@ def main():
     print("Initializing EmbExtractor...")
     embex = EmbExtractor(
         model_type="Pretrained",  # Use "CellClassifier" if fine-tuned
-        num_classes=7,  # Number of classes (if classifier)
+        num_classes=0,  # Number of classes (if classifier)
         emb_mode="cell",
         cell_emb_style="mean_pool",
         filter_data=None,  # Filtering dict if needed, e.g., {"Sample": ["A549"]}

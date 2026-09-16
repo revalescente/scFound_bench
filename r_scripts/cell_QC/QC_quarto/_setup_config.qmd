@@ -2,7 +2,9 @@
 #| label: setup-libraries-and-config
 #| message: false
 #| warning: false
+#| cache: false
 
+# non facciamo Caching di questo chunk perche i dati se no li salviamo 2 volte
 source("helpers_qc.R")
 
 # Carica la configurazione YAML

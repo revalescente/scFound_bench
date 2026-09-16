@@ -6,22 +6,29 @@ format:
   html:
     toc: true
     toc-depth: 3
-    code-fold: show
+    code-fold: true
+    code-tools: true
+    code-overflow: scroll
     theme: cosmo
     embed-resources: true
+    code-block-border-left: true
+    code-block-bg: false
 execute:
   warning: false
   message: false
   cache: true
+  cache-lazy: false
 params:
   dataset: "BE1"
-  save_result: true
+  save_result: false
+  force_recompute_GF: false
 ---
 
 ```{r}
 #| label: setup-libraries
 #| message: false
 #| warning: false
+#| cache: false
 
 library(DropletQC)
 library(purrr)
@@ -33,6 +40,7 @@ library(scran)
 library(scater)
 library(anndataR)
 library(SingleCellExperiment)
+library(edgeR)
 ```
 
 {{< include _setup_config.qmd >}}

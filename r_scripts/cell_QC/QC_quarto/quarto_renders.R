@@ -19,10 +19,10 @@ purrr::walk(datasets, \(ds) {
 
 # singolo
 # Esempio per singolo con cache separata
-ds_single <- "BE1"
-qmd_single <- file.path(output_dir, sprintf("QC_main_%s.qmd", ds_single))
-file.copy(file.path(output_dir, "QC_main.qmd"), qmd_single, overwrite = TRUE)
-quarto::quarto_render(
-  input = qmd_single,
-  execute_params = list(dataset = ds_single)
-)
+# ds_single <- "BE1"
+# qmd_single <- file.path(output_dir, sprintf("QC_main_%s.qmd", ds_single))
+# file.copy(file.path(output_dir, "QC_main.qmd"), qmd_single, overwrite = TRUE)
+# quarto::quarto_render(
+#   input = qmd_single,
+#   execute_params = list(dataset = ds_single)
+# )

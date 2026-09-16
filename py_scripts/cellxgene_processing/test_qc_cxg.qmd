@@ -1,0 +1,43 @@
+---
+title: "Test QC analysis of CellxGene"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    embed-resources: true
+    theme: flatly
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: False 
+#| warning: False
+library(tidyverse)
+library(SingleCellExperiment)
+library(anndataR)
+library(DT)
+library(knitr)
+library(fs)
+library(ggplot2)
+```
+
+```{r}
+data_dir <- "/projects/shared/cellxgene_split_by_dataset"
+tissue <- "intestine"
+tissue_files <- list.files(fs::path(data_dir, tissue))
+```
+
+```{r}
+sce <- read_h5ad(fs::path(data_dir, tissue,tissue_files[1]), as = "SingleCellExperiment")
+```
+
+```{r}
+colnames(colData(sce))
+colData(sce)
+```
+
