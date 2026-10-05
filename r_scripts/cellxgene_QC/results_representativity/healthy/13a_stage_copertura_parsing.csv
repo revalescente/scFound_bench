@@ -1,0 +1,9 @@
+tissue_folder,cellule,pct_eta_numerica,pct_solo_qualitativo,eta_mediana_anni
+blood,1808970,76.4,23.6,35
+others,1112488,88.3,11.7,53
+lung,1018011,87.4,12.6,32
+heart,791410,100,0,55
+brain,601752,100,0,42
+kidney,473916,98.7,1.3,35
+pancreas,161342,100,0,15
+intestine,81763,100,0,0.2

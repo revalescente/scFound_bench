@@ -1,0 +1,125 @@
+---
+title: "prediction_ct"
+format: html
+---
+
+```{r}
+#| message: false
+#| warning: false
+library(SingleCellExperiment)
+library(scran)
+library(scater)
+library(BiocSingular)
+library(bluster)
+```
+
+```{r}
+sce <- readRDS("/projects/shared/intronic_bam/datasets/BE1/BE1_sce.RDS")
+```
+
+```{r}
+sce
+```
+
+```{r}
+colData(sce)
+```
+
+```{r}
+table(sce$cell_status, sce$Sample)
+```
+
+# Features selection
+
+```{r}
+dec.sce <- modelGeneVar(sce)
+```
+
+
+```{r}
+# Visualizing the fit:
+fit.sce <- metadata(dec.sce)
+plot(fit.sce$mean, fit.sce$var, xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(fit.sce$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+```
+
+```{r}
+hvg.var <- getTopHVGs(dec.sce, n = 2000)
+hvg.var.sign <- getTopHVGs(dec.sce, fdr.threshold=0.05)
+hvg.var.prop <- getTopHVGs(dec.sce, prop=0.2)
+length(hvg.var)
+length(hvg.var.sign)
+length(hvg.var.prop)
+```
+
+```{r}
+rowSubset(sce) <- hvg.var # stored in the default 'subset'.
+rowSubset(sce, "HVGs.fdr") <- hvg.var.sign
+rowSubset(sce, "HVGs.prop20") <- hvg.var.prop
+colnames(rowData(sce))
+```
+
+
+```{r}
+sce.hvg <- sce[hvg.var,]
+```
+
+```{r}
+set.seed(1000)
+sce.hvg <- fixedPCA(sce.hvg, 
+    BSPARAM=RandomParam(), name="randomized")
+
+reducedDimNames(sce.hvg)
+```
+
+```{r}
+set.seed(1100101001)
+sce.hvg <- runUMAP(sce.hvg, dimred="PCA")
+```
+
+
+```{r}
+plotReducedDim(sce.hvg, dimred="UMAP", colour_by="Sample")
+```
+
+
+```{r}
+plotReducedDim(sce.hvg , dimred="PCA", ncomponents=4,
+    colour_by="Sample")
+```
+
+```{r}
+plotReducedDim(sce.hvg , dimred="PCA", colour_by="Sample", point_size = 1)
+```
+
+
+# Clustering
+
+```{r}
+
+nn.clusters <- clusterCells(sce.hvg, use.dimred="PCA")
+table(nn.clusters)
+```
+
+```{r}
+colLabels(sce.hvg) <- nn.clusters
+plotReducedDim(sce.hvg, "UMAP", colour_by="label")
+```
+
+```{r}
+set.seed(100)
+clust.kmeans <- clusterCells(sce.hvg, use.dimred="PCA", 
+    BLUSPARAM=KmeansParam(centers=7))
+table(clust.kmeans)
+```
+
+```{r}
+colLabels(sce.hvg) <- clust.kmeans
+plotReducedDim(sce.hvg, "UMAP", colour_by="label")
+```
+
+```{r}
+table(sce.hvg$Sample, sce.hvg$label)
+```
+

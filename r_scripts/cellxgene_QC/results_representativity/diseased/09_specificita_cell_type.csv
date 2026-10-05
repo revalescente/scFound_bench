@@ -1,0 +1,123 @@
+cell_type,cellule_totali,n_tessuti,tessuto_dominante,pct_nel_dominante
+native cell,143808,1,pan-cancer,100
+T cell,105086,1,pan-cancer,100
+malignant cell,89203,1,pan-cancer,100
+epithelial cell,85306,1,pan-cancer,100
+neoplastic cell,64670,1,pan-cancer,100
+"CD8-positive, alpha-beta T cell",59841,1,pan-cancer,100
+"CD4-positive, alpha-beta T cell",31320,1,pan-cancer,100
+B cell,20868,1,pan-cancer,100
+"CD4-positive, alpha-beta memory T cell, CD45RO-positive",19457,1,pan-cancer,100
+macrophage,15891,1,pan-cancer,100
+myeloid cell,14706,1,pan-cancer,100
+exhausted T cell,14580,1,pan-cancer,100
+absorptive cell,13633,1,pan-cancer,100
+abnormal cell,11841,1,pan-cancer,100
+T-helper 17 cell,11507,1,pan-cancer,100
+classical monocyte,10781,1,pan-cancer,100
+regulatory T cell,10021,1,pan-cancer,100
+"naive thymus-derived CD8-positive, alpha-beta T cell",8499,1,pan-cancer,100
+"naive thymus-derived CD4-positive, alpha-beta T cell",8476,1,pan-cancer,100
+"effector CD8-positive, alpha-beta T cell",8103,1,pan-cancer,100
+"effector memory CD8-positive, alpha-beta T cell",8082,1,pan-cancer,100
+endothelial cell,8031,1,pan-cancer,100
+fibroblast,7986,1,pan-cancer,100
+neuron,6381,1,pan-cancer,100
+goblet cell,6337,1,pan-cancer,100
+alveolar macrophage,5745,1,pan-cancer,100
+enterocyte of colon,5697,1,pan-cancer,100
+early promyelocyte,5106,1,pan-cancer,100
+T follicular helper cell,4700,1,pan-cancer,100
+progenitor cell,4001,1,pan-cancer,100
+dendritic cell,4000,1,pan-cancer,100
+oligodendrocyte precursor cell,3602,1,pan-cancer,100
+plasma cell,3536,1,pan-cancer,100
+"activated CD4-positive, alpha-beta T cell",2811,1,pan-cancer,100
+mesenchymal stem cell,2811,1,pan-cancer,100
+myelocyte,2736,1,pan-cancer,100
+mast cell,2708,1,pan-cancer,100
+transit amplifying cell,2633,1,pan-cancer,100
+vascular associated smooth muscle cell,2229,1,pan-cancer,100
+Kupffer cell,2107,1,pan-cancer,100
+CD1c-positive myeloid dendritic cell,2072,1,pan-cancer,100
+natural killer cell,1971,1,pan-cancer,100
+colon goblet cell,1967,1,pan-cancer,100
+blood vessel endothelial cell,1910,1,pan-cancer,100
+neutrophil,1909,1,pan-cancer,100
+elicited macrophage,1851,1,pan-cancer,100
+"CD4-positive, alpha-beta memory T cell",1806,1,pan-cancer,100
+type II pneumocyte,1790,1,pan-cancer,100
+hematopoietic multipotent progenitor cell,1373,1,pan-cancer,100
+epithelial cell of nephron,1216,1,pan-cancer,100
+capillary endothelial cell,1177,1,pan-cancer,100
+conventional dendritic cell,1147,1,pan-cancer,100
+mature NK T cell,1101,1,pan-cancer,100
+"CD4-positive, alpha-beta cytotoxic T cell",1076,1,pan-cancer,100
+intestinal crypt stem cell of colon,1059,1,pan-cancer,100
+Bergmann glial cell,1011,1,pan-cancer,100
+non-classical monocyte,1011,1,pan-cancer,100
+"central memory CD8-positive, alpha-beta T cell",968,1,pan-cancer,100
+transit amplifying cell of colon,964,1,pan-cancer,100
+type I pneumocyte,948,1,pan-cancer,100
+late promyelocyte,933,1,pan-cancer,100
+lymphoid lineage restricted progenitor cell,913,1,pan-cancer,100
+"CD8-positive, alpha-beta memory T cell",890,1,pan-cancer,100
+paneth cell of colon,742,1,pan-cancer,100
+"CD16-positive, CD56-dim natural killer cell, human",690,1,pan-cancer,100
+hepatic stellate cell,680,1,pan-cancer,100
+stem cell,618,1,pan-cancer,100
+pericyte,589,1,pan-cancer,100
+astrocyte,532,1,pan-cancer,100
+intestinal epithelial cell,531,1,pan-cancer,100
+plasmacytoid dendritic cell,484,1,pan-cancer,100
+erythrocyte,479,1,pan-cancer,100
+endothelial cell of lymphatic vessel,471,1,pan-cancer,100
+oligodendrocyte,446,1,pan-cancer,100
+nasal mucosa goblet cell,441,1,pan-cancer,100
+erythroid lineage cell,440,1,pan-cancer,100
+brush cell of trachebronchial tree,419,1,pan-cancer,100
+naive B cell,416,1,pan-cancer,100
+brush cell,382,1,pan-cancer,100
+respiratory basal cell,358,1,pan-cancer,100
+unswitched memory B cell,322,1,pan-cancer,100
+bronchus fibroblast of lung,314,1,pan-cancer,100
+vein endothelial cell,297,1,pan-cancer,100
+erythroid progenitor cell,294,1,pan-cancer,100
+alveolar type 1 fibroblast cell,284,1,pan-cancer,100
+lung macrophage,276,1,pan-cancer,100
+gamma-delta T cell,261,1,pan-cancer,100
+ciliated columnar cell of tracheobronchial tree,231,1,pan-cancer,100
+club cell,223,1,pan-cancer,100
+tracheobronchial smooth muscle cell,181,1,pan-cancer,100
+pulmonary artery endothelial cell,178,1,pan-cancer,100
+interneuron,169,1,pan-cancer,100
+intestinal enteroendocrine cell,165,1,pan-cancer,100
+leukocyte,144,1,pan-cancer,100
+lung pericyte,143,1,pan-cancer,100
+enteroendocrine cell of colon,117,1,pan-cancer,100
+follicular dendritic cell,108,1,pan-cancer,100
+class switched memory B cell,94,1,pan-cancer,100
+basophil mast progenitor cell,92,1,pan-cancer,100
+megakaryocyte-erythroid progenitor cell,89,1,pan-cancer,100
+non-terminally differentiated cell,80,1,pan-cancer,100
+respiratory hillock cell,80,1,pan-cancer,100
+alveolar type 2 fibroblast cell,76,1,pan-cancer,100
+megakaryocyte progenitor cell,62,1,pan-cancer,100
+vascular lymphangioblast,51,1,pan-cancer,100
+epithelial cell of lower respiratory tract,47,1,pan-cancer,100
+memory B cell,24,1,pan-cancer,100
+"CD16-negative, CD56-bright natural killer cell, human",23,1,pan-cancer,100
+mesenchymal cell,20,1,pan-cancer,100
+epithelial cell of alveolus of lung,19,1,pan-cancer,100
+common dendritic progenitor,16,1,pan-cancer,100
+lung neuroendocrine cell,15,1,pan-cancer,100
+mesothelial cell,12,1,pan-cancer,100
+myofibroblast cell,11,1,pan-cancer,100
+ionocyte,7,1,pan-cancer,100
+multi-ciliated epithelial cell,5,1,pan-cancer,100
+precursor B cell,4,1,pan-cancer,100
+immature B cell,3,1,pan-cancer,100
+pre-natural killer cell,2,1,pan-cancer,100
+pro-B cell,2,1,pan-cancer,100
+fraction A pre-pro B cell,1,1,pan-cancer,100
+tracheobronchial goblet cell,1,1,pan-cancer,100

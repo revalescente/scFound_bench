@@ -1,0 +1,1011 @@
+---
+title: "Rappresentatività dei dati CELLxGENE per tessuto"
+subtitle: "Analisi esplorativa delle asimmetrie — tessuti sani vs. malati"
+author: "Valerio Reffo"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "mostra codice"
+    df-print: paged
+    embed-resources: true
+    fig-width: 9
+    fig-height: 6
+execute:
+  warning: false
+  message: false
+  cache: false
+params:
+  data_dir: "/projects/shared/cellxgene_split_by_dataset"
+  cache_dir: "cache_obs"
+  out_dir: "results_representativity"
+  n_workers: 8
+  primary_only: true
+  rare_threshold: 20
+  top_n: 10
+  make_plots: true
+---
+
+```{r setup}
+#| include: false
+suppressPackageStartupMessages({
+  library(data.table)
+  library(knitr)
+  library(ggplot2)
+})
+theme_set(theme_minimal(base_size = 11))
+
+# palette Okabe-Ito: distinguibile per deuteranopia, protanopia e tritanopia
+OKABE_ITO <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
+               "#0072B2", "#D55E00", "#CC79A7", "#000000")
+lighten <- function(cols, f = 0.45) {
+  apply(grDevices::col2rgb(cols), 2, function(x)
+    grDevices::rgb(t(x + (255 - x) * f), maxColorValue = 255))
+}
+pal_cb <- function(n) {
+  # oltre 8 livelli nessuna palette è davvero sicura: si alterna con una versione chiara
+  if (n <= 8) OKABE_ITO[seq_len(n)] else c(OKABE_ITO, lighten(OKABE_ITO))[seq_len(n)]
+}
+
+# asse pseudo-log per le età: tiene insieme settimane fetali e decenni adulti
+PS_SIGMA <- 0.1
+tx <- function(y) asinh(y / (2 * PS_SIGMA))
+AGE_BRK <- c(0, 0.02, 0.1, 0.5, 1, 5, 10, 20, 40, 60, 80, 100)
+AGE_LAB <- c("0", "1 sett", "5 sett", "6 mesi", "1a", "5a", "10a",
+             "20a", "40a", "60a", "80a", "100a")
+fmt_age <- function(y) {
+  fifelse(is.na(y), "NA",
+    fifelse(y < 1 / 12, paste0(round(y * 52.18), " sett"),
+      fifelse(y < 1,    paste0(round(y * 12), " mesi"),
+                        paste0(round(y, 1), "a"))))
+}
+setDTthreads(params$n_workers)
+
+dir.create(params$cache_dir, showWarnings = FALSE, recursive = TRUE)
+for (tag in c("healthy", "diseased", "all")) {
+  dir.create(file.path(params$out_dir, tag), showWarnings = FALSE, recursive = TRUE)
+}
+
+# salva una tabella su disco e la restituisce per la stampa
+write_tbl <- function(dt, name, tag = "all", show = 30) {
+  fwrite(dt, file.path(params$out_dir, tag, paste0(name, ".csv")))
+  if (is.null(show) || nrow(dt) <= show) dt else head(dt, show)
+}
+```
+
+# 1. Scopo
+
+Verificare quanto i dati siano **squilibrati** prima di usarli per addestrare/valutare
+un foundation model: quante cellule per tessuto, quali tipi cellulari dominano,
+quali sono quasi assenti, e quanto le variabili tecniche (piattaforma, tipo di
+sospensione) e biologiche (sesso, stadio di sviluppo) siano confuse col tessuto.
+
+Tutte le analisi sono fatte **solo sui metadati (`obs`)** dei file `.h5ad`: le matrici
+di espressione non vengono mai caricate in memoria.
+
+Ogni analisi è prodotta **due volte e in output separati**:
+
+- `healthy` → cellule con `disease == "normal"`
+- `diseased` → tutte le altre
+
+Le tabelle vengono salvate in CSV sotto `` `r params$out_dir` `` (sottocartelle
+`healthy/`, `diseased/`, `all/`). I grafici sono disattivati di default
+(`make_plots: false`): si accendono solo dopo aver validato le tabelle.
+
+::: {.callout-note}
+## Deduplicazione
+Con `primary_only: true` vengono tenute solo le cellule con `is_primary_data == TRUE`.
+In CELLxGENE la stessa cellula può comparire in più dataset (collection integrate):
+senza questo filtro alcuni tessuti risultano artificialmente più ricchi.
+:::
+
+# 2. Lettura dei metadati
+
+```{r reader}
+#| code-fold: show
+
+#' Lettura di obs da un file h5ad, senza caricare X.
+#' Tenta anndataR in modalità backed (HDF5AnnData); in fallback legge il gruppo
+#' /obs direttamente con rhdf5, decodificando le categoriche.
+read_obs_h5ad <- function(path) {
+  obs <- NULL
+
+  if (requireNamespace("anndataR", quietly = TRUE)) {
+    obs <- tryCatch({
+      ad <- anndataR::read_h5ad(path, as = "HDF5AnnData")   # lazy / backed
+      as.data.frame(ad$obs)
+    }, error = function(e) NULL)
+  }
+
+  if (is.null(obs)) obs <- read_obs_rhdf5(path)
+  data.table::as.data.table(obs)
+}
+
+#' Fallback puro rhdf5: gestisce categoriche moderne (gruppo con categories/codes),
+#' legacy (/obs/__categories/<col>) e obs come dataset compound.
+read_obs_rhdf5 <- function(path) {
+  stopifnot(requireNamespace("rhdf5", quietly = TRUE))
+  info <- rhdf5::h5ls(path, recursive = 3)
+
+  root <- info[info$group == "/" & info$name == "obs", ]
+  if (nrow(root) == 1 && root$otype == "H5I_DATASET") {
+    return(as.data.frame(rhdf5::h5read(path, "obs")))   # formato compound (vecchio)
+  }
+
+  legacy_cats <- any(info$group == "/obs" & info$name == "__categories")
+  cols <- info[info$group == "/obs" & info$name != "__categories", ]
+
+  out <- list()
+  for (i in seq_len(nrow(cols))) {
+    nm <- cols$name[i]
+    p  <- paste0("/obs/", nm)
+    val <- tryCatch({
+      if (cols$otype[i] == "H5I_GROUP") {
+        cats  <- as.vector(rhdf5::h5read(path, paste0(p, "/categories")))
+        codes <- as.integer(rhdf5::h5read(path, paste0(p, "/codes")))
+        codes[codes < 0] <- NA_integer_
+        cats[codes + 1L]
+      } else if (legacy_cats &&
+                 any(info$group == "/obs/__categories" & info$name == nm)) {
+        cats  <- as.vector(rhdf5::h5read(path, paste0("/obs/__categories/", nm)))
+        codes <- as.integer(rhdf5::h5read(path, p))
+        codes[codes < 0] <- NA_integer_
+        cats[codes + 1L]
+      } else {
+        as.vector(rhdf5::h5read(path, p))
+      }
+    }, error = function(e) NULL)
+    if (!is.null(val)) out[[nm]] <- val
+  }
+  rhdf5::h5closeAll()
+
+  n <- max(lengths(out))
+  out <- out[lengths(out) == n]
+  as.data.frame(out, stringsAsFactors = FALSE)
+}
+```
+
+```{r extract}
+#| code-fold: show
+
+# colonne di interesse (le mancanti vengono semplicemente ignorate)
+KEY_COLS <- c("cell_type", "cell_type_ontology_term_id", "assay", "disease",
+              "suspension_type", "sex", "development_stage", "donor_id",
+              "tissue", "tissue_general", "self_reported_ethnicity",
+              "is_primary_data")
+QC_COLS  <- c("nnz", "n_genes", "n_genes_by_counts", "total_counts",
+              "n_counts", "n_measured_vars")
+
+#' Per ogni file: tabella di conteggi per combinazione di metadati (compatta)
+#' + sommario QC per (cell_type, assay). Il risultato viene messo in cache.
+summarise_file <- function(path, tissue_folder) {
+  dataset_id <- tools::file_path_sans_ext(basename(path))
+  cache_f <- file.path(params$cache_dir, paste0(tissue_folder, "__", dataset_id, ".rds"))
+  if (file.exists(cache_f)) return(readRDS(cache_f))
+
+  obs <- tryCatch(read_obs_h5ad(path), error = function(e) NULL)
+  if (is.null(obs) || !nrow(obs)) {
+    res <- list(counts = NULL, qc = NULL,
+                log = data.table(file = path, status = "ERROR/EMPTY", n_cells = 0L))
+    saveRDS(res, cache_f); return(res)
+  }
+
+  n_raw <- nrow(obs)
+  if (isTRUE(params$primary_only) && "is_primary_data" %in% names(obs)) {
+    obs <- obs[as.logical(is_primary_data) %in% TRUE]
+  }
+
+  have_key <- intersect(KEY_COLS, names(obs))
+  have_qc  <- intersect(QC_COLS,  names(obs))
+  for (cc in have_key) set(obs, j = cc, value = as.character(obs[[cc]]))
+
+  counts <- obs[, .N, by = have_key]
+  counts[, `:=`(tissue_folder = tissue_folder, dataset_id = dataset_id)]
+
+  qc <- NULL
+  if (length(have_qc) && "cell_type" %in% names(obs)) {
+    by_qc <- intersect(c("cell_type", "assay"), names(obs))
+    qc <- obs[, c(.(n = .N),
+                  lapply(.SD, function(x) as.numeric(median(as.numeric(x), na.rm = TRUE)))),
+              by = by_qc, .SDcols = have_qc]
+    qc[, `:=`(tissue_folder = tissue_folder, dataset_id = dataset_id)]
+  }
+
+  res <- list(counts = counts, qc = qc,
+              log = data.table(file = path, status = "OK",
+                               n_cells_raw = n_raw, n_cells_kept = nrow(obs),
+                               missing_cols = paste(setdiff(KEY_COLS, have_key),
+                                                    collapse = ",")))
+  saveRDS(res, cache_f)
+  res
+}
+```
+
+```{r run-extraction}
+tissues <- list.dirs(params$data_dir, full.names = FALSE, recursive = FALSE)
+files <- rbindlist(lapply(tissues, function(tt) {
+  ff <- list.files(file.path(params$data_dir, tt), pattern = "\\.h5ad$",
+                   full.names = TRUE, recursive = TRUE)
+  if (!length(ff)) return(NULL)
+  data.table(tissue_folder = tt, path = ff)
+}))
+
+res <- parallel::mclapply(seq_len(nrow(files)), function(i) {
+  summarise_file(files$path[i], files$tissue_folder[i])
+}, mc.cores = params$n_workers, mc.preschedule = FALSE)
+
+meta   <- rbindlist(lapply(res, `[[`, "counts"), fill = TRUE)
+qc_all <- rbindlist(lapply(res, `[[`, "qc"),     fill = TRUE)
+log_dt <- rbindlist(lapply(res, `[[`, "log"),    fill = TRUE)
+
+# stato biologico: sano vs malato
+if (!"disease" %in% names(meta)) meta[, disease := NA_character_]
+meta[, health := fifelse(tolower(disease) %in% c("normal", "healthy"),
+                         "healthy", "diseased", na = "unknown")]
+meta[, tissue_folder := factor(tissue_folder)]
+
+invisible(write_tbl(log_dt, "00_file_log", "all", show = NULL))
+```
+
+**File processati:** `r nrow(files)` &nbsp;|&nbsp; **falliti:** `r sum(log_dt$status != "OK")`
+&nbsp;|&nbsp; **cellule totali (dopo filtro):** `r format(sum(meta$N), big.mark = ".")`
+
+```{r health-overview}
+ov <- meta[, .(cellule = sum(N)), by = .(tissue_folder, health)]
+ov <- dcast(ov, tissue_folder ~ health, value.var = "cellule", fill = 0)
+write_tbl(ov[order(-rowSums(.SD)), , .SDcols = setdiff(names(ov), "tissue_folder")],
+          "01_cellule_sane_vs_malate", "all", show = NULL)
+```
+
+# 3. Analisi
+
+Tutte le funzioni sotto vengono applicate due volte, a `healthy` e a `diseased`.
+
+```{r analysis-functions}
+#| code-fold: show
+
+## A — panoramica per tessuto
+tab_tissue_overview <- function(d) {
+  d[, .(cellule       = sum(N),
+        n_dataset     = uniqueN(dataset_id),
+        n_donatori    = uniqueN(donor_id),
+        n_cell_type   = uniqueN(cell_type),
+        n_assay       = uniqueN(assay)),
+    by = tissue_folder][order(-cellule)][
+      , pct_cellule := round(100 * cellule / sum(cellule), 2)][]
+}
+
+## B — top N cell type per tessuto (+ quota cumulata delle top 5)
+tab_top_celltypes <- function(d, n = params$top_n) {
+  ct <- d[, .(cellule = sum(N)), by = .(tissue_folder, cell_type)]
+  ct[, pct_tessuto := round(100 * cellule / sum(cellule), 2), by = tissue_folder]
+  ct[order(tissue_folder, -cellule), rank := seq_len(.N), by = tissue_folder]
+  ct[rank <= n][order(tissue_folder, rank)]
+}
+
+## B-bis — top N cell type complessivi, a prescindere dal tessuto
+tab_top_celltypes_global <- function(d, n = params$top_n) {
+  ct <- d[, .(cellule = sum(N),
+              n_tessuti = uniqueN(tissue_folder),
+              n_dataset = uniqueN(dataset_id),
+              n_donatori = uniqueN(donor_id)),
+          by = cell_type][order(-cellule)]
+  ct[, pct_totale := round(100 * cellule / sum(cellule), 2)]
+  head(ct, n)
+}
+
+tab_top5_share <- function(d) {
+  ct <- d[, .(cellule = sum(N)), by = .(tissue_folder, cell_type)]
+  ct[order(tissue_folder, -cellule),
+     .(n_cell_type = .N,
+       pct_top1 = round(100 * cellule[1] / sum(cellule), 1),
+       pct_top5 = round(100 * sum(head(cellule, 5)) / sum(cellule), 1),
+       pct_top10 = round(100 * sum(head(cellule, 10)) / sum(cellule), 1)),
+     by = tissue_folder][order(-pct_top5)]
+}
+
+## C — cell type meno rappresentati per tessuto
+tab_bottom_celltypes <- function(d, n = params$top_n) {
+  ct <- d[, .(cellule = sum(N), n_dataset = uniqueN(dataset_id)),
+          by = .(tissue_folder, cell_type)]
+  ct[, pct_tessuto := round(100 * cellule / sum(cellule), 4), by = tissue_folder]
+  ct[order(tissue_folder, cellule), rank_dal_basso := seq_len(.N), by = tissue_folder]
+  ct[rank_dal_basso <= n][order(tissue_folder, rank_dal_basso)]
+}
+
+## D — cell type rari
+tab_rare <- function(d, thr = params$rare_threshold) {
+  ct <- d[, .(cellule = sum(N),
+              n_dataset = uniqueN(dataset_id),
+              n_donatori = uniqueN(donor_id),
+              n_tessuti = uniqueN(tissue_folder)),
+          by = cell_type][order(cellule)]
+  ct[, raro := cellule < thr]
+  ct
+}
+
+tab_rare_summary <- function(d, thr = params$rare_threshold) {
+  ct <- d[, .(cellule = sum(N)), by = .(tissue_folder, cell_type)]
+  ct[, .(n_cell_type = .N,
+         n_rari = sum(cellule < thr),
+         pct_rari = round(100 * mean(cellule < thr), 1),
+         cellule_nei_rari = sum(cellule[cellule < thr]),
+         pct_cellule_nei_rari = round(100 * sum(cellule[cellule < thr]) / sum(cellule), 3)),
+     by = tissue_folder][order(-pct_rari)]
+}
+
+## E — matrice cell type x tessuto / specificità
+tab_ct_by_tissue <- function(d) {
+  ct <- d[, .(cellule = sum(N)), by = .(cell_type, tissue_folder)]
+  dcast(ct, cell_type ~ tissue_folder, value.var = "cellule", fill = 0)
+}
+
+tab_ct_specificity <- function(d) {
+  ct <- d[, .(cellule = sum(N)), by = .(cell_type, tissue_folder)]
+  ct[order(cell_type, -cellule),
+     .(cellule_totali = sum(cellule),
+       n_tessuti = .N,
+       tessuto_dominante = tissue_folder[1],
+       pct_nel_dominante = round(100 * cellule[1] / sum(cellule), 1)),
+     by = cell_type][order(-n_tessuti, -cellule_totali)]
+}
+
+## F — variabili tecniche e demografiche vs tessuto
+tab_cross <- function(d, var) {
+  if (!var %in% names(d)) return(data.table(nota = paste("colonna assente:", var)))
+  x <- d[, .(cellule = sum(N)), by = c("tissue_folder", var)]
+  setnames(x, var, "livello")
+  x[, pct_tessuto := round(100 * cellule / sum(cellule), 2), by = tissue_folder]
+  dcast(x, tissue_folder ~ livello, value.var = "pct_tessuto", fill = 0)
+}
+
+## F-bis — parsing di development_stage
+#' I termini HsapDv sono stringhe ("20th week post-fertilization human stage",
+#' "8-month-old human stage", "50-54 year-old human stage", "human adult stage"):
+#' ordinati alfabeticamente danno weeks < months < years, che è privo di senso.
+#' Qui ogni termine viene convertito in **età in anni** (punto medio per i range),
+#' mentre i termini puramente qualitativi (adult, fetal, ...) restano separati
+#' con un ordine esplicito.
+parse_dev_stage_years <- function(x) {
+  s <- tolower(trimws(as.character(x)))
+  s <- gsub("human|homo sapiens|stage|post[- ]fertilization|postnatal|[- ]old\\b", " ", s)
+  s <- gsub("[[:space:]]+", " ", trimws(s))
+
+  n1 <- suppressWarnings(as.numeric(
+    sub("^([0-9]+(?:\\.[0-9]+)?).*$", "\\1", s)))
+  rng <- grepl("^[0-9]+(\\.[0-9]+)?\\s*(-|–|to)\\s*[0-9]+", s)
+  n2 <- suppressWarnings(as.numeric(
+    sub("^[0-9]+(?:\\.[0-9]+)?\\s*(?:-|–|to)\\s*([0-9]+(?:\\.[0-9]+)?).*$", "\\1", s)))
+  val <- fifelse(rng & !is.na(n2), (n1 + n2) / 2, n1)
+
+  unit <- fcase(grepl("\\bweek",  s), "week",
+                grepl("\\bmonth", s), "month",
+                grepl("\\byear|\\byr", s), "year",
+                grepl("\\bday",   s), "day",
+                default = NA_character_)
+  fac <- c(day = 1 / 365.25, week = 7 / 365.25, month = 1 / 12, year = 1)
+  years <- val * unname(fac[unit])
+
+  # decadi ordinali ("fourth decade human stage" = 30-39 -> 35)
+  ord <- c(first = 5, second = 15, third = 25, fourth = 35, fifth = 45,
+           sixth = 55, seventh = 65, eighth = 75, ninth = 85, tenth = 95)
+  isdec <- grepl("decade", s)
+  if (any(isdec)) {
+    w <- sub("^.*\\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\\b.*$",
+             "\\1", s)
+    years[isdec] <- unname(ord[w[isdec]])
+  }
+  years
+}
+
+# categorie qualitative, con ordine biologico esplicito (solo per ordinare/graficare)
+QUAL_LEVELS <- c("embryonic", "fetal", "neonatal", "infant", "child",
+                 "juvenile", "adolescent", "young adult", "adult",
+                 "middle aged", "aged", "altro")
+QUAL_ANCHOR <- c(embryonic = 0.02, fetal = 0.4, neonatal = 0.05, infant = 0.5,
+                 child = 8, juvenile = 12, adolescent = 15, `young adult` = 25,
+                 adult = 45, `middle aged` = 55, aged = 75, altro = 999)
+
+qual_dev_stage <- function(x) {
+  s <- tolower(as.character(x))
+  fcase(grepl("embryo|carnegie", s), "embryonic",
+        grepl("fetal|foetal",     s), "fetal",
+        grepl("newborn|neonat",   s), "neonatal",
+        grepl("infant",           s), "infant",
+        grepl("child|pediatric",  s), "child",
+        grepl("juvenile",         s), "juvenile",
+        grepl("adolescen|puberty",s), "adolescent",
+        grepl("young adult",      s), "young adult",
+        grepl("middle aged",      s), "middle aged",
+        grepl("aged|elderly|late adult", s), "aged",
+        grepl("adult",            s), "adult",
+        default = "altro")
+}
+
+#' aggiunge a d le colonne stage_years / stage_qual (una volta sola)
+add_stage_cols <- function(d) {
+  if (!"development_stage" %in% names(d)) return(d)
+  lev <- unique(d$development_stage)
+  map <- data.table(development_stage = lev,
+                    stage_years = parse_dev_stage_years(lev),
+                    stage_qual  = factor(qual_dev_stage(lev), levels = QUAL_LEVELS))
+  map[, stage_sort := fifelse(is.na(stage_years),
+                              unname(QUAL_ANCHOR[as.character(stage_qual)]),
+                              stage_years)]
+  merge(d, map, by = "development_stage", all.x = TRUE, sort = FALSE)
+}
+
+## copertura del parsing
+tab_stage_coverage <- function(d) {
+  d[, .(cellule = sum(N),
+        pct_eta_numerica = round(100 * sum(N[!is.na(stage_years)]) / sum(N), 1),
+        pct_solo_qualitativo = round(100 * sum(N[is.na(stage_years)]) / sum(N), 1),
+        eta_mediana_anni = {
+          w <- N[!is.na(stage_years)]; v <- stage_years[!is.na(stage_years)]
+          if (!length(v)) NA_real_ else
+            round(v[order(v)][which.max(cumsum(w[order(v)]) >= sum(w) / 2)], 1)
+        }),
+    by = tissue_folder][order(-cellule)]
+}
+
+## distribuzione dell'età numerica per tessuto (formato lungo, per il grafico)
+tab_stage_years <- function(d) {
+  x <- d[!is.na(stage_years), .(cellule = sum(N)), by = .(tissue_folder, stage_years)]
+  # w: pesi normalizzati a 1 dentro ogni tessuto (richiesto da geom_density)
+  x[, `:=`(w = cellule / sum(cellule),
+           pct_tessuto = round(100 * cellule / sum(cellule), 3)), by = tissue_folder]
+  x[order(tissue_folder, stage_years)]
+}
+
+## termini qualitativi, ordinati biologicamente
+tab_stage_qual <- function(d) {
+  x <- d[is.na(stage_years), .(cellule = sum(N)), by = .(tissue_folder, stage_qual)]
+  x[, pct_tessuto := round(100 * cellule / sum(cellule), 2), by = tissue_folder]
+  dcast(x, tissue_folder ~ stage_qual, value.var = "pct_tessuto",
+        fill = 0, drop = FALSE)
+}
+
+## tabella larga dei termini grezzi, con COLONNE ordinate per età reale
+tab_stage_raw_ordered <- function(d) {
+  x <- d[, .(cellule = sum(N)), by = .(tissue_folder, development_stage, stage_sort)]
+  x[, pct_tessuto := round(100 * cellule / sum(cellule), 2), by = tissue_folder]
+  ordine <- unique(x[order(stage_sort), development_stage])
+  w <- dcast(x, tissue_folder ~ development_stage, value.var = "pct_tessuto", fill = 0)
+  setcolorder(w, c("tissue_folder", intersect(ordine, names(w))))[]
+}
+
+## mediana dell'età per tessuto + dataset di riferimento
+#' Il "dataset di riferimento" è quello che contribuisce più cellule (con età
+#' numerica) a quel tessuto: se la sua quota è alta, la curva del tessuto è in
+#' realtà la curva di un singolo studio.
+tab_stage_median <- function(d) {
+  x <- d[!is.na(stage_years)]
+  if (!nrow(x)) return(data.table())
+  med <- x[, {
+    o <- order(stage_years)
+    v <- stage_years[o]; cw <- cumsum(N[o]) / sum(N)
+    .(mediana_anni = v[which.max(cw >= 0.5)],
+      q25 = v[which.max(cw >= 0.25)], q75 = v[which.max(cw >= 0.75)],
+      cellule = sum(N))
+  }, by = tissue_folder]
+  ds <- x[, .(n = sum(N)), by = .(tissue_folder, dataset_id)][
+    order(tissue_folder, -n), .(dataset_riferimento = dataset_id[1],
+                                pct_dataset = round(100 * n[1] / sum(n), 1)),
+    by = tissue_folder]
+  merge(med, ds, by = "tissue_folder")[order(-cellule)]
+}
+
+## densità pesate calcolate a mano nello spazio trasformato
+#' (stimare il kernel in anni e poi comprimere l'asse schiaccerebbe tutto lo
+#' sviluppo fetale su un unico picco)
+dens_by_tissue <- function(dt_long, adjust = 0.8, n = 512) {
+  rng <- range(tx(dt_long$stage_years), finite = TRUE)
+  pad <- max(0.15 * diff(rng), 0.3)
+  dt_long[, {
+    if (uniqueN(stage_years) < 3) {
+      .(x = tx(stage_years), y = w / max(w))          # troppo pochi livelli
+    } else {
+      dd <- stats::density(tx(stage_years), weights = w / sum(w), adjust = adjust,
+                           n = n, from = rng[1] - pad, to = rng[2] + pad)
+      .(x = dd$x, y = dd$y)
+    }
+  }, by = tissue_folder]
+}
+
+## grafico principale: una curva per tessuto + trattino della mediana etichettato
+plot_stage_density <- function(dt_long, titolo) {
+  if (!nrow(dt_long)) return(NULL)
+  dens <- dens_by_tissue(dt_long)
+  lev  <- dt_long[, .(n = sum(cellule)), by = tissue_folder][order(-n),
+                  as.character(tissue_folder)]
+  dens[, tissue_folder := factor(as.character(tissue_folder), levels = lev)]
+
+  ggplot(dens, aes(x, y, colour = tissue_folder, fill = tissue_folder)) +
+    geom_area(alpha = 0.10, position = "identity", colour = NA) +
+    geom_line(linewidth = 0.9) +
+    scale_x_continuous(breaks = tx(AGE_BRK), labels = AGE_LAB) +
+    scale_colour_manual(values = pal_cb(length(lev))) +
+    scale_fill_manual(values = pal_cb(length(lev))) +
+    labs(title = titolo,
+         x = "age (pseudo-log)", y = "density", colour = NULL, fill = NULL) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.grid.minor = element_blank(),
+          legend.position = "right")
+}
+
+## un pannello per tessuto, con mediana e IQR
+plot_stage_facet <- function(dt_long, med_dt, titolo) {
+  if (!nrow(dt_long)) return(NULL)
+  dens <- dens_by_tissue(dt_long)
+  ggplot() +
+    geom_area(data = dens, aes(x, y), fill = "#0072B2", alpha = 0.25) +
+    geom_line(data = dens, aes(x, y), colour = "#0072B2", linewidth = 0.7) +
+    geom_vline(data = med_dt, aes(xintercept = tx(mediana_anni)),
+               colour = "#D55E00", linewidth = 0.7) +
+    geom_vline(data = med_dt, aes(xintercept = tx(q25)),
+               colour = "#D55E00", linetype = "dotted", linewidth = 0.4) +
+    geom_vline(data = med_dt, aes(xintercept = tx(q75)),
+               colour = "#D55E00", linetype = "dotted", linewidth = 0.4) +
+    geom_text(data = med_dt, aes(x = -Inf, y = Inf,
+                                 label = sprintf("mediana %s\n%s (%.0f%%)",
+                                                 fmt_age(mediana_anni),
+                                                 dataset_riferimento, pct_dataset)),
+              hjust = -0.05, vjust = 1.2, size = 2.5, colour = "grey25") +
+    facet_wrap(~ tissue_folder, scales = "free_y", ncol = 3) +
+    scale_x_continuous(breaks = tx(c(0, 0.1, 1, 10, 40, 80)),
+                       labels = c("0", "5 sett", "1a", "10a", "40a", "80a")) +
+    labs(title = titolo,
+         subtitle = "linea piena = mediana, punteggiate = 1° e 3° quartile",
+         x = "età (scala pseudo-log)", y = "densità")
+}
+
+## G — qualità per gruppo
+tab_qc <- function(keys, health_filter) {
+  if (!nrow(qc_all)) return(data.table(nota = "nessuna colonna QC nei file"))
+  key <- unique(meta[health == health_filter, .(dataset_id, cell_type)])
+  q <- merge(qc_all, key, by = c("dataset_id", "cell_type"))
+  num <- intersect(QC_COLS, names(q))
+  q[, c(.(n_dataset = .N, cellule = sum(n)),
+        lapply(.SD, function(x) round(median(x, na.rm = TRUE), 1))),
+    by = keys, .SDcols = num][order(-cellule)]
+}
+```
+
+```{r render-block}
+#| code-fold: show
+#| output: false
+
+# genera e salva tutte le tabelle per un gruppo (healthy / diseased)
+run_block <- function(tag) {
+  d <- add_stage_cols(meta[health == tag])
+  has_stage <- "stage_years" %in% names(d)
+  stage_tabs <- if (!has_stage) list() else list(
+    stage_cov  = write_tbl(tab_stage_coverage(d),    "13a_stage_copertura_parsing", tag, NULL),
+    stage_yrs  = write_tbl(tab_stage_years(d),       "13b_stage_eta_numerica",      tag, NULL),
+    stage_qual = write_tbl(tab_stage_qual(d),        "13c_stage_qualitativo",       tag, NULL),
+    stage_raw  = write_tbl(tab_stage_raw_ordered(d), "13d_stage_termini_ordinati",  tag, NULL),
+    stage_med  = write_tbl(tab_stage_median(d),      "13e_stage_mediana_per_tessuto", tag, NULL)
+  )
+  c(stage_tabs, list(
+    top_global    = write_tbl(tab_top_celltypes_global(d), "03b_top10_cell_type_globale", tag, NULL),
+    overview      = write_tbl(tab_tissue_overview(d),   "02_panoramica_tessuti",        tag, NULL),
+    top           = write_tbl(tab_top_celltypes(d),     "03_top10_cell_type",           tag, NULL),
+    top5          = write_tbl(tab_top5_share(d),        "04_quota_top5",                tag, NULL),
+    bottom        = write_tbl(tab_bottom_celltypes(d),  "05_bottom10_cell_type",        tag, NULL),
+    rare          = write_tbl(tab_rare(d),              "06_cell_type_rari",            tag, NULL),
+    rare_sum      = write_tbl(tab_rare_summary(d),      "07_rari_per_tessuto",          tag, NULL),
+    ct_matrix     = write_tbl(tab_ct_by_tissue(d),      "08_matrice_celltype_tessuto",  tag, NULL),
+    ct_spec       = write_tbl(tab_ct_specificity(d),    "09_specificita_cell_type",     tag, NULL),
+    assay         = write_tbl(tab_cross(d, "assay"),           "10_assay_per_tessuto",       tag, NULL),
+    suspension    = write_tbl(tab_cross(d, "suspension_type"), "11_suspension_per_tessuto",  tag, NULL),
+    sex           = write_tbl(tab_cross(d, "sex"),             "12_sesso_per_tessuto",       tag, NULL),
+    disease       = write_tbl(tab_cross(d, "disease"),         "14_disease_per_tessuto",     tag, NULL),
+    qc_ct         = write_tbl(tab_qc("cell_type", tag),        "15_qc_per_cell_type",        tag, NULL),
+    qc_assay      = write_tbl(tab_qc("assay", tag),            "16_qc_per_assay",            tag, NULL)
+  ))
+}
+
+H <- run_block("healthy")
+D <- run_block("diseased")
+```
+
+# 4. Tessuti SANI (`disease == "normal"`)
+
+## 4.1 Cellule per tessuto
+
+Quante cellule, ma soprattutto **su quanti dataset e quanti donatori** poggiano:
+200.000 cellule da 2 donatori non valgono 200.000 cellule da 50 donatori.
+
+```{r}
+kable(H$overview)
+```
+
+## 4.2 I 10 tipi cellulari più rappresentati
+
+Prima a livello complessivo, a prescindere dal tessuto (`n_tessuti` dice se il tipo
+è pan-tissue o se il suo peso viene da un solo tessuto):
+
+```{r}
+kable(H$top_global)
+```
+
+Poi dentro ogni tessuto:
+
+```{r}
+H$top
+```
+
+## 4.3 Quanto pesano i primi 5
+
+Percentuale di cellule del tessuto coperta dal cell type più frequente, dai primi 5 e dai primi 10.
+
+```{r}
+kable(H$top5)
+```
+
+## 4.4 I 10 tipi cellulari meno rappresentati
+
+```{r}
+H$bottom
+```
+
+## 4.5 Tipi cellulari rari (< `r params$rare_threshold` cellule)
+
+Quanti sono per tessuto e che frazione di cellule rappresentano.
+
+```{r}
+kable(H$rare_sum)
+```
+
+Elenco dei più rari a livello globale (con il numero di dataset e donatori in cui compaiono:
+se un cell type raro vive in un solo dataset, ciò che il modello impara su di esso è
+indistinguibile dall'effetto batch di quel dataset):
+
+```{r}
+head(H$rare, 40)
+```
+
+## 4.6 Ridondanza e specificità tra tessuti
+
+Per ogni cell type: in quanti tessuti compare, qual è il tessuto dominante e quanto
+è concentrato lì. In cima i label **pan-tissue**, in fondo quelli tessuto-specifici.
+
+```{r}
+head(H$ct_spec, 40)
+```
+
+Matrice completa cell type × tessuto: `08_matrice_celltype_tessuto.csv`.
+
+## 4.7 Confondenti tecnici e demografici
+
+Ogni cella è la **percentuale di cellule di quel tessuto** con quel livello: righe
+molto sbilanciate significano che la variabile è confusa col tessuto e un modello
+può imparare la piattaforma invece della biologia.
+
+### Piattaforma (assay)
+
+```{r}
+H$assay
+```
+
+### Tipo di sospensione (cell vs nucleus)
+
+```{r}
+H$suspension
+```
+
+### Sesso
+
+```{r}
+H$sex
+```
+
+### Stadio di sviluppo
+
+I termini HsapDv sono stringhe, quindi in ordine alfabetico danno
+*weeks → months → years*, che non è un ordine di età. Ogni termine viene qui
+convertito in **età in anni** (punto medio per i range, `4th decade` → 35,
+settimane/mesi riscalati). I termini puramente qualitativi (`human adult stage`,
+`fetal stage`, …) non hanno un'età e restano in una tabella separata, ordinata
+biologicamente: non vengono forzati a un numero inventato.
+
+Copertura del parsing per tessuto:
+
+```{r}
+kable(H$stage_cov)
+```
+
+Distribuzione dell'età — densità pesata sul numero di cellule, una linea per
+tessuto. Asse x in scala pseudo-log per tenere insieme settimane fetali e decenni
+adulti.
+
+```{r}
+#| fig-height: 6.5
+#| fig-width: 11
+plot_stage_density(H$stage_yrs, "Età dei donatori per tessuto — sani")
+```
+
+```{r}
+#| fig-height: 8
+plot_stage_facet(H$stage_yrs, H$stage_med,
+                 "Età dei donatori, un pannello per tessuto — sani")
+```
+
+Mediana, quartili e dataset dominante in tabella:
+
+```{r}
+kable(H$stage_med)
+```
+
+Termini qualitativi (% delle cellule del tessuto senza età numerica), in ordine
+di stadio:
+
+```{r}
+H$stage_qual
+```
+
+Tabella completa dei termini grezzi con le colonne ordinate per età reale:
+`13d_stage_termini_ordinati.csv`.
+
+## 4.8 Qualità per gruppo
+
+Mediana per dataset delle metriche disponibili (`nnz`/`n_genes` = geni rilevati per
+cellula, `total_counts` = UMI per cellula), aggregata come **mediana delle mediane
+per dataset**; `n_dataset` dice su quanti dataset si basa il valore.
+
+A cosa serve: distingue un cell type *raro* da uno *mal misurato*. Se un cell type ha
+poche cellule **e** una mediana di geni molto bassa, il segnale è debole due volte;
+se invece la mediana è in linea con gli altri, la rarità è reale e trattabile con
+riponderazione. Sull'assay la stessa tabella mostra il salto tipico tra snRNA-seq
+(poche UMI) e 10x v3 / Smart-seq.
+
+```{r}
+head(H$qc_ct, 30)
+```
+
+```{r}
+kable(H$qc_assay)
+```
+
+# 5. Tessuti MALATI (`disease != "normal"`)
+
+## 5.1 Cellule per tessuto
+
+```{r}
+kable(D$overview)
+```
+
+## 5.2 I 10 tipi cellulari più rappresentati
+
+```{r}
+kable(D$top_global)
+```
+
+```{r}
+D$top
+```
+
+## 5.3 Quanto pesano i primi 5
+
+```{r}
+kable(D$top5)
+```
+
+## 5.4 I 10 tipi cellulari meno rappresentati
+
+```{r}
+D$bottom
+```
+
+## 5.5 Tipi cellulari rari (< `r params$rare_threshold` cellule)
+
+```{r}
+kable(D$rare_sum)
+```
+
+```{r}
+head(D$rare, 40)
+```
+
+## 5.6 Ridondanza e specificità tra tessuti
+
+```{r}
+head(D$ct_spec, 40)
+```
+
+## 5.7 Confondenti tecnici e demografici
+
+### Patologie presenti per tessuto
+
+```{r}
+D$disease
+```
+
+### Piattaforma (assay)
+
+```{r}
+D$assay
+```
+
+### Tipo di sospensione
+
+```{r}
+D$suspension
+```
+
+### Sesso
+
+```{r}
+D$sex
+```
+
+### Stadio di sviluppo
+
+Solo tabelle: i grafici sono prodotti unicamente per i tessuti sani.
+
+```{r}
+kable(D$stage_cov)
+```
+
+```{r}
+kable(D$stage_med)
+```
+
+```{r}
+D$stage_qual
+```
+
+## 5.8 Qualità per gruppo
+
+```{r}
+head(D$qc_ct, 30)
+```
+
+```{r}
+kable(D$qc_assay)
+```
+
+# 6. Grafici — solo tessuti sani
+
+I grafici sono prodotti **unicamente per i tessuti sani**; per i malati restano le
+tabelle della §5. Si disattivano con `-P make_plots:false`.
+
+```{r}
+theme_big <- theme_minimal(base_size = 16) +
+  theme(
+    plot.title     = element_text(size = 20, face = "bold"),
+    plot.subtitle  = element_text(size = 14, colour = "grey35"),
+    axis.text.y    = element_text(size = 14),   # nomi dei cell type
+    axis.text.x    = element_text(size = 13),
+    axis.title     = element_text(size = 15),
+    strip.text     = element_text(size = 15, face = "bold"),
+    legend.title   = element_text(size = 14),
+    legend.text    = element_text(size = 13),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+## 6.1 Tipi cellulari più presenti in assoluto
+
+A prescindere dal tessuto. Il colore distingue i tipi presenti in molti tessuti da
+quelli concentrati in pochi: una barra alta ma con `n_tessuti` basso significa che
+quel tipo domina il conteggio globale per merito di un solo tessuto.
+
+```{r}
+#| eval: !expr params$make_plots
+#| fig-height: 5
+#| fig-width: 10
+g <- copy(H$top_global)
+g[, cell_type := factor(cell_type, levels = rev(cell_type))]
+plot1 <- ggplot(g, aes(cell_type, cellule, fill = n_tessuti)) +
+  geom_col() +
+  geom_text(aes(label = sprintf("%s  (%.1f%%, %d tissues)",
+                                format(cellule, big.mark = "."), pct_totale, n_tessuti)),
+            hjust = -0.05, size = 5, colour = "grey20") +
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.38)),
+                     labels = function(x) format(x, big.mark = ".")) +
+  scale_fill_gradient(low = "#56B4E9", high = "#D55E00", name = "n. tissues") +
+  labs(title = paste("The", params$top_n, "most represented cell types — healthy tissue"),
+       subtitle = "All tissues", x = NULL, y = "cells") +
+  theme_big
+plot1
+ggsave("results_representativity/plot1_top_celltypes.png", plot1, width = 15, height = 6.5, dpi = 300)
+ggsave(plot1, file = "results_representativity/most_5celltypes.png", units = "cm", width = 30, height = 35)
+```
+
+## 6.2 Tipi cellulari più presenti, dentro ogni tessuto
+
+```{r}
+#| eval: !expr params$make_plots
+#| fig-height: 9
+#| fig-width: 11
+# etichetta univoca per tessuto, così l'ordinamento è indipendente in ogni pannello
+tp[, key := factor(paste(tissue_folder, cell_type, sep = "\u00a7"))]
+tp[, key := reorder(key, pct_tessuto)]
+
+wrap_ct <- function(x) stringr::str_wrap(sub("^.*\u00a7", "", x), width = 28)
+# senza stringr:
+# wrap_ct <- function(x) vapply(sub("^.*\u00a7", "", x),
+#                               function(s) paste(strwrap(s, 28), collapse = "\n"), "")
+
+plot2 <- ggplot(tp, aes(key, pct_tessuto)) +
+  geom_col(fill = "#0072B2", alpha = 0.85) +
+  coord_flip() +
+  facet_wrap(~ tissue_folder, scales = "free", ncol = 3) +
+  scale_x_discrete(labels = wrap_ct) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+  labs(title = paste("Top", params$top_n, "cell types per tissue — healthy"),
+       x = NULL, y = "% of tissue's cells") +
+  theme_big +
+  theme(axis.text.y = element_text(size = 12, lineheight = 0.9),
+        panel.spacing.x = unit(1.2, "lines"))
+
+ggsave("results_representativity/plot2_top_celltypes_per_tissue.png", plot2, width = 17, height = 13, dpi = 300)
+ggsave(plot2, file = "results_representativity/most_ct_tissues.png", units = "cm", width = 60, height = 35)
+```
+
+## 6.3 Cellule per tessuto
+
+```{r}
+#| eval: !expr params$make_plots
+#| fig-height: 4.5
+ggplot(H$overview, aes(reorder(tissue_folder, cellule), cellule)) +
+  geom_col(fill = "#009E73", alpha = 0.9) +
+  geom_text(aes(label = format(cellule, big.mark = ".")), hjust = -0.1, size = 3) +
+  coord_flip() + scale_y_log10(expand = expansion(mult = c(0, 0.25))) +
+  labs(title = "Cellule per tessuto — sani", x = NULL, y = "cellule (log10)")
+```
+
+## 6.4 Concentrazione: quota delle 5 più frequenti
+
+```{r}
+#| eval: !expr params$make_plots
+#| fig-height: 4.5
+ggplot(H$top5, aes(reorder(tissue_folder, pct_top5), pct_top5)) +
+  geom_col(fill = "#CC79A7", alpha = 0.9) +
+  geom_text(aes(label = paste0(pct_top5, "%")), hjust = -0.15, size = 3) +
+  coord_flip() + scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(title = "Quota delle 5 cell type più frequenti — sani",
+       x = NULL, y = "% delle cellule del tessuto")
+```
+
+## 6.5 Piattaforma per tessuto
+
+Scala sequenziale (viridis), leggibile in scala di grigi e con daltonismo.
+
+```{r}
+#| eval: !expr params$make_plots
+#| fig-height: 5
+#| fig-width: 10
+hm <- melt(H$assay, id.vars = "tissue_folder",
+           variable.name = "assay", value.name = "pct")
+ggplot(hm, aes(assay, tissue_folder, fill = pct)) +
+  geom_tile(colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "mako", direction = -1, name = "% cellule") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank()) +
+  labs(title = "Piattaforma per tessuto — sani", x = NULL, y = NULL)
+```
+
+# 7. Note metodologiche
+
+- Lettura via `anndataR::read_h5ad(..., as = "HDF5AnnData")`: accesso *backed*, viene
+  materializzato solo `obs`. Se `anndataR` non è disponibile o fallisce sul formato del
+  file, si usa un lettore `rhdf5` che decodifica manualmente le categoriche.
+- Il risultato per file è messo in cache in `` `r params$cache_dir` ``: i rilanci sono
+  istantanei. Cancellare la cache dopo un cambio di parametri di estrazione.
+- `mc.cores = n_workers`: alzarlo quanto serve sul nodo HPC (l'estrazione è I/O bound).
+- `health` è derivato da `disease`; le cellule senza `disease` finiscono in `unknown`
+  e non entrano in nessuno dei due blocchi (controllare `01_cellule_sane_vs_malate.csv`).
+- `development_stage`: `parse_dev_stage_years()` converte i termini HsapDv in anni
+  (settimane ×7/365, mesi /12, range → punto medio, decadi ordinali → punto medio).
+  I termini senza età (`adult`, `fetal`, …) **non** ricevono un valore inventato: vanno
+  nella tabella qualitativa con ordine esplicito. Controllare `13a_stage_copertura_parsing.csv`:
+  se `pct_solo_qualitativo` è alta, la densità descrive solo una parte delle cellule.
+- Le percentuali in §4.7/§5.7 sono calcolate per riga (dentro il tessuto), quindi
+  ogni riga somma a 100.

@@ -1,0 +1,412 @@
+cell_type,blood,brain,heart,intestine,kidney,lung,others,pancreas
+B cell,118239,0,1221,194,2136,7885,8595,1031
+B-1 B cell,0,0,0,0,8,0,0,0
+B-1a B cell,0,0,0,0,0,279,0,0
+B-1b B cell,0,0,0,0,0,555,0,0
+B-2 B cell,0,0,0,0,46,0,0,0
+Bergmann glial cell,0,8,0,0,0,0,7,0
+"CD14-low, CD16-positive monocyte",6518,0,0,0,0,0,0,0
+CD14-positive monocyte,55290,0,1883,0,0,0,1384,0
+"CD14-positive, CD16-negative classical monocyte",20736,0,0,0,0,0,0,0
+"CD14-positive, CD16-positive monocyte",662,0,3278,0,0,0,0,0
+CD141-positive myeloid dendritic cell,15,0,0,0,0,0,0,0
+"CD16-negative, CD56-bright natural killer cell, human",7725,0,0,0,0,1214,66,0
+"CD16-positive, CD56-dim natural killer cell, human",29654,0,0,0,0,3458,0,0
+CD1c-positive myeloid dendritic cell,30,0,0,0,0,5281,0,0
+"CD34-positive, CD38-negative hematopoietic stem cell",74,0,0,0,0,0,0,0
+"CD34-positive, CD56-positive, CD117-positive common innate lymphoid precursor, human",0,0,0,0,0,80,0,0
+CD4-positive helper T cell,14375,0,0,0,181,1876,1598,0
+"CD4-positive, alpha-beta T cell",296133,0,0,0,2875,21822,3959,0
+"CD4-positive, alpha-beta cytotoxic T cell",3665,0,3113,0,0,0,0,0
+"CD4-positive, alpha-beta memory T cell",33362,0,0,0,0,0,79,0
+"CD4-positive, alpha-beta thymocyte",5858,0,0,0,0,0,0,0
+"CD8-alpha-beta-positive, alpha-beta intraepithelial T cell",0,0,0,0,0,0,1063,0
+"CD8-positive, alpha-beta T cell",226851,0,0,0,1305,18635,3150,0
+"CD8-positive, alpha-beta cytokine secreting effector T cell",1493,0,0,0,0,0,0,0
+"CD8-positive, alpha-beta cytotoxic T cell",9577,0,2956,0,0,5755,1043,0
+"CD8-positive, alpha-beta memory T cell",14912,0,0,0,0,82,0,0
+"CD8-positive, alpha-beta memory T cell, CD45RO-positive",635,0,0,0,0,417,0,0
+"CD8-positive, alpha-beta thymocyte",2620,0,0,0,0,0,65,0
+"ILC1, human",213,0,0,0,0,0,0,0
+IgA plasma cell,173,0,0,0,0,0,1974,0
+IgA plasmablast,66,0,0,0,0,0,0,0
+IgG memory B cell,607,0,0,0,0,0,0,0
+IgG plasma cell,168,0,0,0,0,0,388,0
+IgG plasmablast,20,0,0,0,0,0,0,0
+IgG-negative class switched memory B cell,1285,0,0,0,0,0,0,0
+IgM plasma cell,84,0,0,0,0,0,0,0
+Leydig cell,0,0,0,0,0,0,2793,0
+M cell of gut,0,0,0,0,0,0,139,0
+Mueller cell,0,0,0,0,0,0,30034,0
+OFF-bipolar cell,0,0,0,0,0,0,17024,0
+ON-bipolar cell,0,0,0,0,0,0,25424,0
+P/D1 enteroendocrine cell,0,0,0,0,0,0,804,0
+PP cell,0,0,0,0,0,0,0,485
+Schwann cell,0,0,829,0,0,139,3404,0
+Schwann cell precursor,0,0,0,0,0,192,0,0
+Sertoli cell,0,0,0,0,0,0,35281,2
+T cell,13747,0,651,470,2224,14968,20569,7973
+T follicular helper cell,911,0,0,0,0,79,3269,0
+T follicular regulatory cell,0,0,0,0,0,0,415,0
+T-helper 1 cell,101,0,0,0,0,0,0,0
+T-helper 17 cell,1,0,0,0,0,167,0,0
+T-helper 2 cell,16,0,0,0,0,0,0,0
+T-helper 22 cell,6379,0,0,0,0,0,0,0
+abnormal cell,0,0,0,5,0,0,0,0
+absorptive cell,0,0,0,3400,0,0,0,0
+acinar cell,0,0,0,4,1,181,0,14643
+"activated CD4-positive, alpha-beta T cell",8300,0,1047,0,0,0,53,0
+"activated CD4-positive, alpha-beta T cell, human",12,0,0,0,0,0,0,0
+"activated CD8-positive, alpha-beta T cell",2668,0,3001,0,0,0,3156,0
+"activated CD8-positive, alpha-beta T cell, human",1,0,0,0,0,0,0,0
+adipocyte of epicardial fat of left ventricle,0,0,15,0,0,0,0,0
+adventitial cell,0,0,0,0,0,373,0,0
+alpha-beta T cell,304,0,0,0,0,248,1115,0
+alternatively activated macrophage,1,0,1,0,268,0,0,0
+alveolar macrophage,7,0,0,0,0,133931,0,0
+alveolar type 1 fibroblast cell,0,0,0,0,0,14550,0,0
+alveolar type 2 fibroblast cell,0,0,0,0,0,9347,0,0
+amacrine cell,0,0,0,0,0,0,20457,0
+animal cell,1247,0,0,0,0,1523,0,0
+anterior lens cell,0,0,0,0,0,0,6160,0
+astrocyte,0,25491,0,0,0,0,4666,0
+basal cell,18,0,0,0,0,3401,8904,1
+basophil,29,0,0,0,0,693,15,0
+basophil mast progenitor cell,3,0,0,0,0,0,0,0
+blood cell,5310,0,0,0,0,0,0,0
+blood vessel endothelial cell,0,0,0,0,0,2776,1894,0
+bone marrow cell,0,0,0,0,0,36,0,0
+bronchial epithelial cell,0,0,0,0,0,693,0,0
+bronchial goblet cell,0,0,0,0,0,71,0,0
+bronchial smooth muscle cell,0,0,0,0,0,408,0,0
+bronchus fibroblast of lung,0,0,0,0,0,903,0,0
+brush cell,0,0,0,85,0,0,259,0
+brush cell of trachebronchial tree,0,0,0,0,0,58,0,0
+capillary endothelial cell,0,0,59326,0,851,14812,309,0
+cardiac endothelial cell,0,0,9105,0,0,0,0,0
+cardiac mesenchymal cell,0,0,315,0,0,0,0,0
+cardiac muscle cell,0,0,114728,0,0,0,0,0
+cardiac muscle myoblast,0,0,18310,0,0,0,0,0
+cardiac neuron,0,0,706,0,0,0,0,0
+cell of skeletal muscle,0,0,15,5,23,0,0,16
+"central memory CD4-positive, alpha-beta T cell",25206,0,0,0,0,0,1420,0
+"central memory CD8-positive, alpha-beta T cell",8492,0,0,0,0,0,522,0
+central nervous system macrophage,0,18621,0,0,0,0,1676,0
+centroblast,0,0,0,0,0,0,1806,0
+centrocyte,0,0,0,0,0,0,598,0
+cholangiocyte,0,0,0,0,0,0,121,0
+chondrocyte,1,0,0,0,1,2806,4,0
+choroid plexus epithelial cell,0,37,0,0,0,0,1,0
+chromaffin cell,0,0,0,599,0,0,0,0
+ciliary muscle cell,0,0,0,0,0,0,2933,0
+ciliated cell,0,0,0,0,0,821,0,0
+ciliated columnar cell of tracheobronchial tree,0,0,0,0,0,16317,0,0
+ciliated epithelial cell,0,0,0,0,0,2676,1166,0
+class switched memory B cell,3903,0,0,0,0,0,0,0
+classical monocyte,182010,0,0,0,555,36425,0,0
+club cell,5,0,0,0,0,7769,0,0
+colon goblet cell,0,0,0,0,0,0,1189,0
+columnar/cuboidal epithelial cell,0,0,0,0,129,0,0,0
+common dendritic progenitor,111,0,0,0,0,0,686,0
+common lymphoid progenitor,619,0,0,0,0,0,1300,0
+common myeloid progenitor,3,0,0,0,0,7,214,0
+conjunctival epithelial cell,0,0,0,0,0,0,1703,0
+contractile cell,0,0,2459,0,0,158,0,0
+conventional dendritic cell,19278,0,0,0,2029,952,1442,0
+cord blood hematopoietic stem cell,8413,0,6,52,17,0,0,46
+corneal endothelial cell,0,0,0,0,0,0,1926,0
+corneal epithelial cell,0,0,0,0,0,0,3920,0
+cytotoxic T cell,0,0,0,0,385,0,0,0
+decidual cell,1,0,0,0,0,0,0,0
+"decidual natural killer cell, human",7,0,0,0,0,0,0,0
+dendritic cell,8144,0,868,444,1542,5927,1269,471
+"dendritic cell, human",975,0,0,0,0,283,0,0
+dermis microvascular lymphatic vessel endothelial cell,0,0,603,0,0,0,0,0
+double negative T regulatory cell,548,0,0,0,0,0,0,0
+double negative thymocyte,1852,0,0,0,0,0,0,0
+"double-positive, alpha-beta thymocyte",880,0,0,0,1,0,0,0
+early T lineage precursor,0,0,0,0,0,0,649,0
+early lymphoid progenitor,0,0,0,0,1,21,177,0
+early promyelocyte,6,0,0,0,0,0,0,0
+"effector CD4-positive, alpha-beta T cell",1321,0,0,0,0,132,0,0
+"effector CD8-positive, alpha-beta T cell",7700,0,0,0,0,80,0,0
+"effector memory CD4-positive, alpha-beta T cell",9508,0,0,0,0,947,0,0
+"effector memory CD8-positive, alpha-beta T cell",21914,0,0,0,0,0,0,0
+"effector memory CD8-positive, alpha-beta T cell, terminally differentiated",4121,0,0,0,0,945,0,0
+elicited macrophage,0,0,0,0,0,6709,0,0
+embryonic stem cell,0,0,0,1,11,0,0,0
+endocardial cell,0,0,9065,0,0,0,0,0
+endocrine cell,0,0,0,16,4,0,0,5424
+endothelial cell,3,633,22096,425,23207,14187,22693,5264
+endothelial cell of artery,0,0,21337,0,0,950,918,0
+endothelial cell of hepatic sinusoid,0,0,0,0,0,0,641,0
+endothelial cell of lymphatic vessel,0,0,1997,295,0,9251,3815,139
+endothelial cell of periportal hepatic sinusoid,0,0,0,0,0,0,238,0
+endothelial cell of sinusoid,0,0,0,0,0,0,42,0
+endothelial cell of vascular tree,0,0,11757,1459,5862,12939,0,4804
+endothelial tip cell,0,0,0,0,0,0,11,0
+enteric neuron,0,0,0,0,0,0,0,287
+enterocyte,0,0,0,9980,17,0,49131,3787
+enterocyte of epithelium of large intestine,0,0,0,0,0,0,2016,0
+enterocyte of epithelium of small intestine,0,0,0,0,0,0,4840,0
+enteroendocrine cell,0,0,0,0,0,240,2252,0
+enteroendocrine cell of colon,0,0,0,0,0,0,82,0
+enteroendocrine cell of small intestine,0,0,0,0,0,0,72,0
+enucleate erythrocyte,0,0,0,0,0,202,0,0
+enucleated reticulocyte,3,0,0,0,0,0,0,0
+eosinophil,0,0,0,0,0,13,22,0
+ependymal cell,0,433,0,0,0,0,147,0
+epicardial adipocyte,0,0,5690,0,0,0,0,0
+epithelial cell,19,0,19,10376,20147,3336,9302,542
+epithelial cell of alveolus of lung,0,0,0,0,0,22504,0,0
+epithelial cell of esophagus,0,0,0,0,0,0,26299,0
+epithelial cell of exocrine pancreas,0,0,0,0,0,0,0,5567
+epithelial cell of lower respiratory tract,0,0,0,0,0,83409,0,0
+epithelial cell of lung,0,0,0,0,0,11604,593,0
+epithelial cell of nephron,0,0,0,0,541,0,0,0
+epithelial cell of proximal tubule,0,0,0,2,74589,0,0,3
+epithelial cell of small intestine,0,0,0,0,0,0,339,0
+erythroblast,17,0,6,206,250,222,4967,1261
+erythrocyte,11349,0,7,0,2,900,1924,0
+erythroid lineage cell,164,0,80,30,81,0,0,502
+erythroid progenitor cell,641,0,9,12,31,0,4998,25
+"erythroid progenitor cell, mammalian",74,0,0,0,0,0,0,0
+fat cell,0,0,151,0,0,0,19166,0
+fetal cardiomyocyte,0,0,1310,0,0,0,0,0
+fibro/adipogenic progenitor cell,0,0,0,0,0,0,16021,0
+fibroblast,0,1673,74476,34,1416,19879,22153,92
+fibroblast of cardiac tissue,0,0,22511,0,0,0,0,0
+fibroblast of lung,0,0,0,0,0,25069,0,0
+follicular B cell,0,0,0,0,0,0,171,0
+follicular dendritic cell,0,0,0,0,0,0,17,0
+foveolar cell of stomach,0,0,0,0,0,0,8401,0
+fraction A pre-pro B cell,0,0,0,0,7,0,606,0
+gamma-delta T cell,23208,0,0,0,0,165,2522,0
+germ cell,0,0,0,0,0,0,3624,0
+germinal center B cell,0,0,0,0,0,4,0,0
+glandular cell of esophagus,0,0,0,0,0,0,1107,0
+glial cell,0,0,0,2087,0,242,3897,1036
+glomerular capillary endothelial cell,0,0,0,0,235,0,0,0
+glomerular endothelial cell,0,0,0,0,622,0,0,0
+glycinergic neuron,0,0,0,0,0,0,6065,0
+goblet cell,0,0,0,1174,5,236,9234,0
+granulocyte,523,0,0,0,10,0,620,0
+granulocyte monocyte progenitor cell,0,0,0,0,4,29,908,0
+group 2 innate lymphoid cell,0,0,0,0,2,149,0,0
+"group 2 innate lymphoid cell, human",36,0,0,0,0,0,0,0
+group 3 innate lymphoid cell,15,0,0,0,25,175,0,0
+gut absorptive cell,0,0,0,0,0,0,477,0
+hematopoietic cell,0,0,0,0,0,0,2931,0
+hematopoietic multipotent progenitor cell,2565,0,0,0,0,0,3907,0
+hematopoietic precursor cell,629,0,0,0,0,0,0,0
+hematopoietic stem cell,760,0,0,0,0,32,0,0
+hepatic stellate cell,0,0,0,0,0,0,20,0
+hepatocyte,0,0,1089,0,0,2,3755,0
+immature B cell,990,0,0,0,19,526,403,0
+immature Schwann cell,0,0,0,0,0,33,0,0
+immature innate lymphoid cell,0,0,3155,0,0,0,118,0
+inflammatory macrophage,0,0,0,0,0,0,822,0
+innate lymphoid cell,332,0,3004,2144,577,1790,800,6330
+intermediate monocyte,2015,0,0,0,0,252,0,0
+intestinal crypt stem cell,0,0,0,0,0,0,694,0
+intestinal crypt stem cell of colon,0,0,0,531,0,0,385,0
+intestinal crypt stem cell of small intestine,0,0,0,0,0,0,873,0
+intestinal enteroendocrine cell,0,0,0,45,0,0,0,0
+intestinal epithelial cell,0,0,0,24664,0,1,11147,0
+intestinal tuft cell,0,0,0,0,0,0,412,0
+intestine goblet cell,0,0,0,0,0,0,323,0
+intraepithelial lymphocyte,0,0,0,0,0,0,308,0
+ionocyte,0,0,0,0,0,147,0,0
+keratinocyte,0,0,0,0,1,0,0,0
+kidney capillary endothelial cell,0,0,0,0,1008,0,0,0
+kidney cell,0,0,0,0,1918,0,0,0
+kidney collecting duct cell,0,0,0,0,125,0,0,0
+kidney collecting duct intercalated cell,0,0,0,0,10791,0,0,0
+kidney collecting duct principal cell,0,0,0,0,17069,0,0,0
+kidney connecting tubule epithelial cell,0,0,0,0,8374,0,0,0
+kidney distal convoluted tubule epithelial cell,0,0,0,0,12079,0,0,0
+kidney epithelial cell,0,0,0,0,11116,0,0,0
+kidney interstitial cell,0,0,0,0,1102,0,0,0
+kidney interstitial fibroblast,0,0,0,0,8321,0,0,0
+kidney loop of Henle epithelial cell,0,0,0,0,8597,0,0,0
+kidney loop of Henle thick ascending limb epithelial cell,0,0,0,0,35103,0,0,0
+kidney loop of Henle thin ascending limb epithelial cell,0,0,0,0,4117,0,0,0
+kidney loop of Henle thin descending limb epithelial cell,0,0,0,0,7030,0,0,0
+kidney resident macrophage,0,0,0,0,87,0,0,0
+large pre-B-II cell,0,0,0,0,28,546,0,0
+late pro-B cell,0,0,0,0,7,452,0,0
+late promyelocyte,2,0,0,0,0,0,0,0
+lens epithelial cell,0,0,0,0,0,0,5276,0
+lens fiber cell,0,0,0,0,0,0,787,0
+leukocyte,0,570,0,0,6028,0,1151,0
+lung ciliated cell,0,0,0,0,0,6345,0,0
+lung goblet cell,0,0,0,0,0,1174,0,0
+lung macrophage,0,0,0,0,0,8952,0,0
+lung microvascular endothelial cell,0,0,0,0,0,485,0,0
+lung neuroendocrine cell,0,0,0,0,0,544,0,0
+lung pericyte,0,0,0,0,0,2616,0,0
+lung secretory cell,0,0,0,0,0,128,0,0
+lymphocyte,2218,0,765,0,177,240,3313,0
+lymphoid lineage restricted progenitor cell,243,0,527,0,0,0,2545,0
+macroglial cell,0,0,0,0,0,0,5276,0
+macrophage,1973,0,19370,40,4738,39550,24715,368
+malignant cell,0,0,0,0,0,314,0,0
+mast cell,26,0,1919,25,222,10476,2349,58
+mature B cell,0,0,0,0,1,0,1108,0
+mature NK T cell,7039,0,1795,0,1165,1811,5809,47
+mature alpha-beta T cell,43891,0,0,0,0,0,0,0
+mature gamma-delta T cell,4323,0,0,0,0,0,0,0
+megakaryocyte,947,0,361,0,207,284,272,0
+megakaryocyte progenitor cell,15,0,0,0,0,0,0,0
+megakaryocyte-erythroid progenitor cell,268,0,0,0,2,28,1631,0
+melanocyte,0,0,0,0,0,0,4344,0
+memory B cell,15138,0,0,0,0,143,16527,0
+memory T cell,341,0,0,0,0,0,1647,0
+memory regulatory T cell,1212,0,0,0,0,0,0,0
+mesangial cell,0,0,0,0,44490,0,0,0
+mesenchymal cell,0,0,0,0,5117,33235,125476,0
+mesenchymal stem cell,0,0,261,716,6228,0,0,2342
+mesothelial cell,0,0,718,212,0,1331,7104,123
+mesothelial cell of epicardium,0,0,890,0,0,0,0,0
+mesothelial fibroblast,0,0,0,0,0,36,0,0
+microfold cell of epithelium of small intestine,0,0,0,0,0,0,19,0
+microglial cell,0,0,0,0,0,0,733,0
+monocyte,58915,0,1911,24,2442,21778,2448,92
+mononuclear cell,0,0,0,0,0,242,0,0
+mucosal invariant T cell,14356,0,0,0,0,124,0,0
+mucous neck cell,0,0,0,0,0,0,2298,0
+mucus secreting cell,0,0,0,0,0,1294,0,0
+multi-ciliated epithelial cell,0,0,0,0,0,1558,0,0
+mural cell,0,0,11500,0,0,0,2341,0
+muscle cell,0,0,0,0,0,839,0,0
+myelocyte,108,0,0,0,0,0,0,0
+myeloid cell,77,0,7956,2862,3415,2358,2227,3381
+myeloid dendritic cell,1052,0,0,0,0,0,0,0
+"myeloid dendritic cell, human",41,0,0,0,0,0,0,0
+myeloid leukocyte,1,0,0,0,0,693,7348,0
+myeloid lineage restricted progenitor cell,379,0,0,0,0,0,1357,0
+myofibroblast cell,0,0,0,0,2795,2009,1495,0
+naive B cell,44033,0,0,0,0,79,5620,0
+naive T cell,1616,0,0,0,0,0,925,0
+naive regulatory T cell,1295,0,0,0,0,0,0,0
+"naive thymus-derived CD4-positive, alpha-beta T cell",87693,0,0,0,128,185,0,0
+"naive thymus-derived CD8-positive, alpha-beta T cell",42890,0,0,0,66,39,0,0
+nasal mucosa goblet cell,0,0,0,0,0,821,0,0
+native cell,605,0,43541,0,91041,57126,37701,3040
+natural T-regulatory cell,0,0,0,0,0,0,1821,0
+natural killer cell,150696,0,3628,0,3026,25474,1950,0
+neoplastic cell,0,0,0,52,0,0,0,0
+neural cell,0,0,3961,0,35,0,1519,0
+neural progenitor cell,0,0,0,0,0,15,0,0
+neuroendocrine cell,0,0,0,0,0,1285,0,0
+neuron,0,480915,2046,2578,129,601,6779,289
+neuron associated cell,0,0,0,0,0,0,1728,0
+neuronal receptor cell,0,0,576,0,0,0,0,0
+neutrophil,16569,0,6,10,341,374,672,10
+neutrophil progenitor cell,0,0,0,0,0,0,162,0
+non-classical monocyte,36186,0,0,0,491,6347,0,0
+non-pigmented ciliary epithelial cell,0,0,0,0,0,0,997,0
+oligodendrocyte,0,60760,0,0,0,0,11547,0
+oligodendrocyte precursor cell,0,11515,0,0,0,0,1970,0
+osteoclast,0,0,0,0,0,0,58,0
+pancreatic A cell,0,0,0,0,0,0,0,21474
+pancreatic D cell,0,0,0,0,0,0,0,4115
+pancreatic PP cell,0,0,0,0,0,0,0,192
+pancreatic acinar cell,0,0,0,0,0,0,0,19283
+pancreatic ductal cell,0,0,0,0,0,0,0,13052
+pancreatic epsilon cell,0,0,0,0,0,0,0,181
+pancreatic stellate cell,0,0,0,0,0,0,0,1553
+paneth cell,0,0,0,0,0,0,834,0
+paneth cell of epithelium of small intestine,0,0,0,0,0,0,49,0
+papillary tips cell,0,0,0,0,322,0,0,0
+parietal cell,0,0,0,0,0,0,362,0
+parietal epithelial cell,0,0,0,0,1658,0,0,0
+peptic cell,0,0,0,0,0,0,1220,0
+pericyte,0,847,82185,0,41,5673,11051,0
+peripheral nervous system neuron,0,0,0,0,0,93,3363,0
+pigmented ciliary epithelial cell,0,0,0,0,0,0,998,0
+pigmented epithelial cell,0,0,0,0,0,0,2000,0
+placental villous trophoblast,7,0,0,0,0,0,0,0
+plasma cell,1996,0,10,178,183,3077,9768,85
+plasmablast,1636,0,0,0,0,36,7194,0
+plasmacytoid dendritic cell,6696,0,0,0,155,623,1154,0
+"plasmacytoid dendritic cell, human",1092,0,0,0,0,0,0,0
+platelet,6986,0,0,0,0,21,0,0
+pneumocyte,0,0,0,0,0,5440,0,0
+podocyte,0,0,0,0,2632,0,0,0
+pre-B-I cell,0,0,0,0,0,542,0,0
+precursor B cell,459,0,0,0,0,650,3771,0
+precursor cell,0,0,0,0,0,0,376,0
+primitive red blood cell,0,0,0,0,0,305,517,0
+primordial germ cell,4,0,3,9,114,0,0,13
+pro-B cell,416,0,0,0,15,135,2994,0
+proerythroblast,158,0,0,0,0,0,1469,0
+professional antigen presenting cell,4765,0,3058,23,23,0,0,44
+progenitor cell,520,0,0,0,238,18,413,0
+promonocyte,0,0,0,0,47,124,620,0
+promyelocyte,0,0,0,0,2,36,103,0
+pulmonary artery endothelial cell,0,0,0,0,0,1903,0,0
+pulmonary interstitial fibroblast,0,0,0,0,0,8289,0,0
+pulmonary ionocyte,0,0,0,0,0,41,0,0
+regular atrial cardiac myocyte,0,0,23585,0,0,0,0,0
+regular ventricular cardiac myocyte,0,0,125289,0,0,0,0,0
+regulatory T cell,8473,0,0,0,44,1706,1605,0
+renal alpha-intercalated cell,0,0,0,0,2186,0,0,0
+renal beta-intercalated cell,0,0,0,0,579,0,0,0
+renal intercalated cell,0,0,0,0,4880,0,0,0
+renal interstitial pericyte,0,0,0,0,3874,0,0,0
+renal principal cell,0,0,0,0,1852,0,0,0
+respiratory basal cell,6,0,0,0,0,12025,0,0
+respiratory epithelial cell,0,0,0,0,0,1423,0,0
+respiratory goblet cell,0,0,0,0,0,762,0,0
+respiratory hillock cell,0,0,0,0,0,500,0,0
+reticulocyte,0,0,0,0,0,305,0,0
+retina horizontal cell,0,0,0,0,0,0,6761,0
+retinal bipolar neuron,0,0,0,0,0,0,19850,0
+retinal blood vessel endothelial cell,0,0,0,0,0,0,85,0
+retinal cone cell,0,0,0,0,0,0,5215,0
+retinal ganglion cell,0,0,0,0,0,0,17108,0
+retinal pigment epithelial cell,0,0,0,0,0,0,4982,0
+retinal rod cell,0,0,0,0,0,0,141250,0
+secondary lens fiber,0,0,0,0,0,0,1677,0
+serous cell of epithelium of bronchus,0,0,0,0,0,15,0,0
+serous secreting cell,0,0,0,0,0,14,0,0
+skeletal muscle satellite cell,0,0,0,0,2,0,0,0
+small intestine goblet cell,0,0,0,0,0,0,388,0
+small pre-B-II cell,0,0,0,0,36,453,0,0
+smooth muscle cell,0,0,24091,1372,294,2033,3038,2850
+smooth muscle cell of sphincter of pupil,0,0,0,0,0,0,935,0
+smooth muscle myoblast,0,0,411,0,0,0,0,0
+somatic cell,0,0,0,0,0,0,365,0
+squamous epithelial cell,0,0,0,0,0,227,0,0
+stem cell,391,0,0,0,0,0,11925,0
+stratified epithelial cell,0,0,0,0,4,0,0,0
+stromal cell,0,0,16413,14412,1409,73721,21618,6770
+subcutaneous fat cell,0,0,189,0,0,0,0,0
+supporting cell,0,0,0,0,0,0,2772,0
+taste receptor cell,0,0,0,0,9138,0,0,0
+thymocyte,0,0,0,0,0,12,0,0
+tonsil germinal center B cell,0,0,0,0,0,0,10188,0
+tracheobronchial goblet cell,0,0,0,0,0,61,0,0
+tracheobronchial serous cell,0,0,0,0,0,352,0,0
+tracheobronchial smooth muscle cell,0,0,0,0,0,5921,0,0
+transit amplifying cell,0,0,0,511,0,0,374,0
+transit amplifying cell of colon,0,0,0,0,0,0,16989,0
+transit amplifying cell of small intestine,0,0,0,0,0,0,502,0
+transitional stage B cell,374,0,0,0,0,0,0,0
+tuft cell of colon,0,0,0,0,0,0,524,0
+type B pancreatic cell,0,0,0,0,0,0,0,22249
+type EC enteroendocrine cell,0,0,0,0,0,0,77,0
+type G enteroendocrine cell,0,0,0,0,0,0,8,0
+type I NK T cell,1194,0,0,0,0,0,0,0
+type I pneumocyte,0,0,0,0,0,17508,0,0
+type II pneumocyte,0,0,0,0,0,76458,0,0
+type L enteroendocrine cell,0,0,0,0,0,0,197,0
+unswitched memory B cell,1193,0,0,0,0,0,0,0
+urothelial cell,0,0,0,0,45,0,0,0
+vasa recta ascending limb cell,0,0,0,0,797,0,0,0
+vasa recta descending limb cell,0,0,0,0,528,0,0,0
+vascular associated smooth muscle cell,0,249,0,0,1419,1438,8,0
+vein endothelial cell,0,0,8734,0,0,5598,1280,0
+ventricular cardiac muscle cell,0,0,3168,0,0,0,0,0
+visceromotor neuron,0,0,348,0,0,191,0,0

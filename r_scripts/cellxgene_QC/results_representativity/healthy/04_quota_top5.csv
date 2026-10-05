@@ -1,0 +1,9 @@
+tissue_folder,n_cell_type,pct_top1,pct_top5,pct_top10
+brain,13,79.9,99.3,100
+intestine,43,30.2,76.8,90.5
+heart,71,15.8,57.6,74.8
+kidney,111,19.2,56.6,71.7
+pancreas,47,13.8,56.2,76.1
+blood,138,16.4,53.8,69.9
+lung,160,13.2,41.7,57.4
+others,194,12.7,35,46.6

@@ -1,0 +1,10 @@
+tissue_folder,embryonic,fetal,neonatal,infant,child,juvenile,adolescent,young adult,adult,middle aged,aged,altro
+blood,0,0,0,0,0,0,0,0,0,0,0,0
+brain,0,0,0,0,0,0,0,0,0,0,0,0
+heart,0,0,0,0,0,0,0,0,0,0,0,0
+intestine,0,0,0,0,0,0,0,0,0,0,0,0
+kidney,0,0,0,0,0,0,0,0,0,0,0,0
+lung,0,0,0,0,0,0,0,0,0,0,0,0
+others,0,0,0,0,0,0,0,0,0,0,0,0
+pan-cancer,0,0,0,0,8.81,0,0,0,0,0,0,91.19
+pancreas,0,0,0,0,0,0,0,0,0,0,0,0

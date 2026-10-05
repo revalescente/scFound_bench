@@ -1,0 +1,9 @@
+tissue_folder,cellule,n_dataset,n_donatori,n_cell_type,n_assay,pct_cellule
+blood,1808970,26,294,138,10,29.9
+others,1112488,41,183,194,6,18.39
+lung,1018011,21,208,160,8,16.83
+heart,791410,8,49,71,5,13.08
+brain,601752,22,3,13,1,9.95
+kidney,473916,12,96,111,6,7.83
+pancreas,161342,5,33,47,5,2.67
+intestine,81763,5,20,43,3,1.35

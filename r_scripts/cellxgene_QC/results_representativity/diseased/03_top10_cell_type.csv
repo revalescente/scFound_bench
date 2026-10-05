@@ -1,0 +1,11 @@
+tissue_folder,cell_type,cellule,pct_tessuto,rank
+pan-cancer,native cell,143808,16.28,1
+pan-cancer,T cell,105086,11.9,2
+pan-cancer,malignant cell,89203,10.1,3
+pan-cancer,epithelial cell,85306,9.66,4
+pan-cancer,neoplastic cell,64670,7.32,5
+pan-cancer,"CD8-positive, alpha-beta T cell",59841,6.78,6
+pan-cancer,"CD4-positive, alpha-beta T cell",31320,3.55,7
+pan-cancer,B cell,20868,2.36,8
+pan-cancer,"CD4-positive, alpha-beta memory T cell, CD45RO-positive",19457,2.2,9
+pan-cancer,macrophage,15891,1.8,10

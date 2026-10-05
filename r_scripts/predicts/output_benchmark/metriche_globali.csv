@@ -1,0 +1,4 @@
+"Metodo","Accuracy","F1_macro","F1_weighted","ARI"
+"SingleR",0.9773,0.9831,0.9772,0.9336
+"scGPT",0.8506,0.8949,0.8513,0.6358
+"Geneformer",0.725,0.7718,0.729,0.4356

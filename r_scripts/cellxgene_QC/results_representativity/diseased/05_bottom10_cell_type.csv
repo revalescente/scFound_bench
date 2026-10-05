@@ -1,0 +1,11 @@
+tissue_folder,cell_type,cellule,n_dataset,pct_tessuto,rank_dal_basso
+pan-cancer,tracheobronchial goblet cell,1,1,1e-04,1
+pan-cancer,fraction A pre-pro B cell,1,1,1e-04,2
+pan-cancer,pre-natural killer cell,2,1,2e-04,3
+pan-cancer,pro-B cell,2,1,2e-04,4
+pan-cancer,immature B cell,3,1,3e-04,5
+pan-cancer,precursor B cell,4,1,5e-04,6
+pan-cancer,multi-ciliated epithelial cell,5,1,6e-04,7
+pan-cancer,ionocyte,7,1,8e-04,8
+pan-cancer,myofibroblast cell,11,1,0.0012,9
+pan-cancer,mesothelial cell,12,1,0.0014,10

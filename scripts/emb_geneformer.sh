@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=geneformer_emb
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:nvidia_h200_nvl:1          # Richiede 1 GPU H200 intera (se preferisci un profilo MIG più grande usa: nvidia_h200_nvl_2g.70gb:1)
+#SBATCH --gres=gpu:nvidia_h200_nvl:1        # Richiede 1 GPU H200 intera (se preferisci un profilo MIG più grande usa: nvidia_h200_nvl_2g.70gb:1)
 #SBATCH --time=10:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10

@@ -1,0 +1,412 @@
+cell_type,cellule_totali,n_tessuti,tessuto_dominante,pct_nel_dominante
+endothelial cell,88508,8,kidney,26.2
+neuron,493337,7,brain,97.5
+B cell,139301,7,blood,84.9
+fibroblast,119723,7,heart,62.2
+macrophage,90754,7,lung,43.6
+monocyte,87610,7,blood,67.2
+T cell,60602,7,others,33.9
+epithelial cell,43741,7,kidney,46.1
+myeloid cell,22276,7,heart,35.7
+dendritic cell,18665,7,blood,43.6
+neutrophil,17982,7,blood,92.1
+plasma cell,15297,7,others,63.9
+mast cell,15075,7,lung,69.5
+innate lymphoid cell,14977,7,pancreas,42.3
+erythroblast,6929,7,others,71.7
+native cell,233054,6,kidney,39.1
+stromal cell,134343,6,lung,54.9
+smooth muscle cell,33678,6,heart,71.5
+mature NK T cell,17666,6,blood,39.8
+erythroid progenitor cell,5716,6,others,87.4
+natural killer cell,184774,5,blood,81.6
+pericyte,99797,5,heart,82.4
+endothelial cell of vascular tree,36821,5,lung,35.1
+endothelial cell of lymphatic vessel,15497,5,lung,59.7
+erythrocyte,14182,5,blood,80
+mesothelial cell,9488,5,others,74.9
+cord blood hematopoietic stem cell,8534,5,blood,98.6
+professional antigen presenting cell,7913,5,blood,60.2
+lymphocyte,6713,5,others,49.4
+megakaryocyte,2071,5,blood,45.7
+erythroid lineage cell,857,5,pancreas,58.6
+primordial germ cell,143,5,kidney,79.7
+"CD4-positive, alpha-beta T cell",324789,4,blood,91.2
+"CD8-positive, alpha-beta T cell",249941,4,blood,90.8
+capillary endothelial cell,75298,4,heart,78.8
+enterocyte,62915,4,others,78.1
+conventional dendritic cell,23701,4,blood,81.3
+"CD8-positive, alpha-beta cytotoxic T cell",19331,4,blood,49.5
+CD4-positive helper T cell,18030,4,blood,79.7
+acinar cell,14829,4,pancreas,98.7
+basal cell,12324,4,others,72.2
+regulatory T cell,11828,4,blood,71.6
+goblet cell,10649,4,others,86.7
+mesenchymal stem cell,9547,4,kidney,65.2
+plasmacytoid dendritic cell,8628,4,blood,77.6
+glial cell,7262,4,others,53.7
+pro-B cell,3560,4,others,84.1
+vascular associated smooth muscle cell,3114,4,lung,46.2
+chondrocyte,2812,4,lung,99.8
+immature B cell,1938,4,blood,51.1
+megakaryocyte-erythroid progenitor cell,1929,4,others,84.6
+progenitor cell,1189,4,blood,43.7
+cell of skeletal muscle,59,4,kidney,39
+classical monocyte,218990,3,blood,83.1
+mesenchymal cell,163828,3,others,76.6
+"naive thymus-derived CD4-positive, alpha-beta T cell",88006,3,blood,99.6
+epithelial cell of proximal tubule,74594,3,kidney,100
+CD14-positive monocyte,58557,3,blood,94.4
+naive B cell,49732,3,blood,88.5
+non-classical monocyte,43024,3,blood,84.1
+"naive thymus-derived CD8-positive, alpha-beta T cell",42995,3,blood,99.8
+intestinal epithelial cell,35812,3,intestine,68.9
+memory B cell,31808,3,others,52
+gamma-delta T cell,25895,3,blood,89.6
+endothelial cell of artery,23205,3,heart,92
+vein endothelial cell,15612,3,heart,55.9
+"activated CD4-positive, alpha-beta T cell",9400,3,blood,88.3
+"CD16-negative, CD56-bright natural killer cell, human",9005,3,blood,85.8
+plasmablast,8866,3,others,81.1
+"activated CD8-positive, alpha-beta T cell",8825,3,others,35.8
+myeloid leukocyte,8042,3,others,91.4
+leukocyte,7749,3,kidney,77.8
+myofibroblast cell,6299,3,kidney,44.4
+neural cell,5515,3,heart,71.8
+endocrine cell,5444,3,pancreas,99.6
+precursor B cell,4880,3,others,77.3
+hepatocyte,4846,3,others,77.5
+Schwann cell,4372,3,others,77.9
+T follicular helper cell,4259,3,others,76.8
+lymphoid lineage restricted progenitor cell,3315,3,others,76.8
+alpha-beta T cell,1667,3,others,66.9
+granulocyte,1153,3,others,53.8
+granulocyte monocyte progenitor cell,941,3,others,96.5
+promonocyte,791,3,others,78.4
+basophil,737,3,lung,94
+alternatively activated macrophage,270,3,kidney,99.3
+common myeloid progenitor,224,3,others,95.5
+group 3 innate lymphoid cell,215,3,lung,81.4
+early lymphoid progenitor,199,3,others,88.9
+promyelocyte,141,3,others,73
+alveolar macrophage,133938,2,lung,100
+oligodendrocyte,72307,2,brain,84
+Sertoli cell,35283,2,others,100
+"CD4-positive, alpha-beta memory T cell",33441,2,blood,99.8
+"CD16-positive, CD56-dim natural killer cell, human",33112,2,blood,89.6
+astrocyte,30157,2,brain,84.5
+"central memory CD4-positive, alpha-beta T cell",26626,2,blood,94.7
+central nervous system macrophage,20297,2,brain,91.7
+fat cell,19317,2,others,99.2
+"CD8-positive, alpha-beta memory T cell",14994,2,blood,99.5
+mucosal invariant T cell,14480,2,blood,99.1
+mural cell,13841,2,heart,83.1
+oligodendrocyte precursor cell,13485,2,brain,85.4
+stem cell,12316,2,others,96.8
+epithelial cell of lung,12197,2,lung,95.1
+respiratory basal cell,12031,2,lung,100
+"effector memory CD4-positive, alpha-beta T cell",10455,2,blood,90.9
+"central memory CD8-positive, alpha-beta T cell",9014,2,blood,94.2
+"effector CD8-positive, alpha-beta T cell",7780,2,blood,99
+club cell,7774,2,lung,99.9
+platelet,7007,2,blood,99.7
+"CD4-positive, alpha-beta cytotoxic T cell",6778,2,blood,54.1
+hematopoietic multipotent progenitor cell,6472,2,others,60.4
+CD1c-positive myeloid dendritic cell,5311,2,lung,99.4
+"effector memory CD8-positive, alpha-beta T cell, terminally differentiated",5066,2,blood,81.3
+blood vessel endothelial cell,4670,2,lung,59.4
+"CD14-positive, CD16-positive monocyte",3940,2,heart,83.2
+ciliated epithelial cell,3842,2,lung,69.7
+peripheral nervous system neuron,3456,2,others,97.3
+immature innate lymphoid cell,3273,2,heart,96.4
+animal cell,2770,2,lung,55
+"CD8-positive, alpha-beta thymocyte",2685,2,blood,97.6
+contractile cell,2617,2,heart,94
+naive T cell,2541,2,blood,63.6
+enteroendocrine cell,2492,2,others,90.4
+intermediate monocyte,2267,2,blood,88.9
+IgA plasma cell,2147,2,others,91.9
+memory T cell,1988,2,others,82.8
+common lymphoid progenitor,1919,2,others,67.7
+myeloid lineage restricted progenitor cell,1736,2,others,78.2
+proerythroblast,1627,2,others,90.3
+"effector CD4-positive, alpha-beta T cell",1453,2,blood,90.9
+"dendritic cell, human",1258,2,blood,77.5
+mature B cell,1109,2,others,99.9
+"CD8-positive, alpha-beta memory T cell, CD45RO-positive",1052,2,blood,60.4
+intestinal crypt stem cell of colon,916,2,intestine,58
+transit amplifying cell,885,2,intestine,57.7
+"double-positive, alpha-beta thymocyte",881,2,blood,99.9
+primitive red blood cell,822,2,others,62.9
+common dendritic progenitor,797,2,others,86.1
+hematopoietic stem cell,792,2,blood,96
+fraction A pre-pro B cell,613,2,others,98.9
+ependymal cell,580,2,brain,74.7
+large pre-B-II cell,574,2,lung,95.1
+IgG plasma cell,556,2,others,69.8
+visceromotor neuron,539,2,heart,64.6
+small pre-B-II cell,489,2,lung,92.6
+late pro-B cell,459,2,lung,98.5
+brush cell,344,2,others,75.3
+T-helper 17 cell,168,2,lung,99.4
+group 2 innate lymphoid cell,151,2,lung,98.7
+choroid plexus epithelial cell,38,2,brain,97.4
+eosinophil,35,2,others,62.9
+Bergmann glial cell,15,2,brain,53.3
+embryonic stem cell,12,2,kidney,91.7
+retinal rod cell,141250,1,others,100
+regular ventricular cardiac myocyte,125289,1,heart,100
+cardiac muscle cell,114728,1,heart,100
+epithelial cell of lower respiratory tract,83409,1,lung,100
+type II pneumocyte,76458,1,lung,100
+mesangial cell,44490,1,kidney,100
+mature alpha-beta T cell,43891,1,blood,100
+kidney loop of Henle thick ascending limb epithelial cell,35103,1,kidney,100
+Mueller cell,30034,1,others,100
+epithelial cell of esophagus,26299,1,others,100
+ON-bipolar cell,25424,1,others,100
+fibroblast of lung,25069,1,lung,100
+regular atrial cardiac myocyte,23585,1,heart,100
+fibroblast of cardiac tissue,22511,1,heart,100
+epithelial cell of alveolus of lung,22504,1,lung,100
+type B pancreatic cell,22249,1,pancreas,100
+"effector memory CD8-positive, alpha-beta T cell",21914,1,blood,100
+pancreatic A cell,21474,1,pancreas,100
+"CD14-positive, CD16-negative classical monocyte",20736,1,blood,100
+amacrine cell,20457,1,others,100
+retinal bipolar neuron,19850,1,others,100
+pancreatic acinar cell,19283,1,pancreas,100
+cardiac muscle myoblast,18310,1,heart,100
+type I pneumocyte,17508,1,lung,100
+retinal ganglion cell,17108,1,others,100
+kidney collecting duct principal cell,17069,1,kidney,100
+OFF-bipolar cell,17024,1,others,100
+transit amplifying cell of colon,16989,1,others,100
+ciliated columnar cell of tracheobronchial tree,16317,1,lung,100
+fibro/adipogenic progenitor cell,16021,1,others,100
+alveolar type 1 fibroblast cell,14550,1,lung,100
+pancreatic ductal cell,13052,1,pancreas,100
+kidney distal convoluted tubule epithelial cell,12079,1,kidney,100
+kidney epithelial cell,11116,1,kidney,100
+kidney collecting duct intercalated cell,10791,1,kidney,100
+tonsil germinal center B cell,10188,1,others,100
+alveolar type 2 fibroblast cell,9347,1,lung,100
+taste receptor cell,9138,1,kidney,100
+cardiac endothelial cell,9105,1,heart,100
+endocardial cell,9065,1,heart,100
+lung macrophage,8952,1,lung,100
+kidney loop of Henle epithelial cell,8597,1,kidney,100
+foveolar cell of stomach,8401,1,others,100
+kidney connecting tubule epithelial cell,8374,1,kidney,100
+kidney interstitial fibroblast,8321,1,kidney,100
+pulmonary interstitial fibroblast,8289,1,lung,100
+kidney loop of Henle thin descending limb epithelial cell,7030,1,kidney,100
+retina horizontal cell,6761,1,others,100
+elicited macrophage,6709,1,lung,100
+"CD14-low, CD16-positive monocyte",6518,1,blood,100
+T-helper 22 cell,6379,1,blood,100
+lung ciliated cell,6345,1,lung,100
+anterior lens cell,6160,1,others,100
+glycinergic neuron,6065,1,others,100
+tracheobronchial smooth muscle cell,5921,1,lung,100
+"CD4-positive, alpha-beta thymocyte",5858,1,blood,100
+epicardial adipocyte,5690,1,heart,100
+epithelial cell of exocrine pancreas,5567,1,pancreas,100
+pneumocyte,5440,1,lung,100
+blood cell,5310,1,blood,100
+lens epithelial cell,5276,1,others,100
+macroglial cell,5276,1,others,100
+retinal cone cell,5215,1,others,100
+retinal pigment epithelial cell,4982,1,others,100
+renal intercalated cell,4880,1,kidney,100
+enterocyte of epithelium of small intestine,4840,1,others,100
+melanocyte,4344,1,others,100
+mature gamma-delta T cell,4323,1,blood,100
+kidney loop of Henle thin ascending limb epithelial cell,4117,1,kidney,100
+pancreatic D cell,4115,1,pancreas,100
+corneal epithelial cell,3920,1,others,100
+class switched memory B cell,3903,1,blood,100
+renal interstitial pericyte,3874,1,kidney,100
+germ cell,3624,1,others,100
+absorptive cell,3400,1,intestine,100
+ventricular cardiac muscle cell,3168,1,heart,100
+ciliary muscle cell,2933,1,others,100
+hematopoietic cell,2931,1,others,100
+Leydig cell,2793,1,others,100
+supporting cell,2772,1,others,100
+podocyte,2632,1,kidney,100
+lung pericyte,2616,1,lung,100
+mucous neck cell,2298,1,others,100
+renal alpha-intercalated cell,2186,1,kidney,100
+enterocyte of epithelium of large intestine,2016,1,others,100
+pigmented epithelial cell,2000,1,others,100
+corneal endothelial cell,1926,1,others,100
+kidney cell,1918,1,kidney,100
+pulmonary artery endothelial cell,1903,1,lung,100
+double negative thymocyte,1852,1,blood,100
+renal principal cell,1852,1,kidney,100
+natural T-regulatory cell,1821,1,others,100
+centroblast,1806,1,others,100
+neuron associated cell,1728,1,others,100
+conjunctival epithelial cell,1703,1,others,100
+secondary lens fiber,1677,1,others,100
+parietal epithelial cell,1658,1,kidney,100
+multi-ciliated epithelial cell,1558,1,lung,100
+pancreatic stellate cell,1553,1,pancreas,100
+"CD8-positive, alpha-beta cytokine secreting effector T cell",1493,1,blood,100
+respiratory epithelial cell,1423,1,lung,100
+fetal cardiomyocyte,1310,1,heart,100
+naive regulatory T cell,1295,1,blood,100
+mucus secreting cell,1294,1,lung,100
+IgG-negative class switched memory B cell,1285,1,blood,100
+neuroendocrine cell,1285,1,lung,100
+peptic cell,1220,1,others,100
+memory regulatory T cell,1212,1,blood,100
+type I NK T cell,1194,1,blood,100
+unswitched memory B cell,1193,1,blood,100
+colon goblet cell,1189,1,others,100
+lung goblet cell,1174,1,lung,100
+glandular cell of esophagus,1107,1,others,100
+kidney interstitial cell,1102,1,kidney,100
+"plasmacytoid dendritic cell, human",1092,1,blood,100
+"CD8-alpha-beta-positive, alpha-beta intraepithelial T cell",1063,1,others,100
+myeloid dendritic cell,1052,1,blood,100
+kidney capillary endothelial cell,1008,1,kidney,100
+pigmented ciliary epithelial cell,998,1,others,100
+non-pigmented ciliary epithelial cell,997,1,others,100
+smooth muscle cell of sphincter of pupil,935,1,others,100
+bronchus fibroblast of lung,903,1,lung,100
+mesothelial cell of epicardium,890,1,heart,100
+intestinal crypt stem cell of small intestine,873,1,others,100
+muscle cell,839,1,lung,100
+paneth cell,834,1,others,100
+inflammatory macrophage,822,1,others,100
+ciliated cell,821,1,lung,100
+nasal mucosa goblet cell,821,1,lung,100
+P/D1 enteroendocrine cell,804,1,others,100
+vasa recta ascending limb cell,797,1,kidney,100
+lens fiber cell,787,1,others,100
+respiratory goblet cell,762,1,lung,100
+microglial cell,733,1,others,100
+cardiac neuron,706,1,heart,100
+intestinal crypt stem cell,694,1,others,100
+bronchial epithelial cell,693,1,lung,100
+early T lineage precursor,649,1,others,100
+endothelial cell of hepatic sinusoid,641,1,others,100
+hematopoietic precursor cell,629,1,blood,100
+glomerular endothelial cell,622,1,kidney,100
+IgG memory B cell,607,1,blood,100
+dermis microvascular lymphatic vessel endothelial cell,603,1,heart,100
+chromaffin cell,599,1,intestine,100
+centrocyte,598,1,others,100
+renal beta-intercalated cell,579,1,kidney,100
+neuronal receptor cell,576,1,heart,100
+B-1b B cell,555,1,lung,100
+double negative T regulatory cell,548,1,blood,100
+lung neuroendocrine cell,544,1,lung,100
+pre-B-I cell,542,1,lung,100
+epithelial cell of nephron,541,1,kidney,100
+vasa recta descending limb cell,528,1,kidney,100
+tuft cell of colon,524,1,others,100
+transit amplifying cell of small intestine,502,1,others,100
+respiratory hillock cell,500,1,lung,100
+PP cell,485,1,pancreas,100
+lung microvascular endothelial cell,485,1,lung,100
+gut absorptive cell,477,1,others,100
+T follicular regulatory cell,415,1,others,100
+intestinal tuft cell,412,1,others,100
+smooth muscle myoblast,411,1,heart,100
+bronchial smooth muscle cell,408,1,lung,100
+small intestine goblet cell,388,1,others,100
+cytotoxic T cell,385,1,kidney,100
+precursor cell,376,1,others,100
+transitional stage B cell,374,1,blood,100
+adventitial cell,373,1,lung,100
+somatic cell,365,1,others,100
+parietal cell,362,1,others,100
+tracheobronchial serous cell,352,1,lung,100
+epithelial cell of small intestine,339,1,others,100
+intestine goblet cell,323,1,others,100
+papillary tips cell,322,1,kidney,100
+cardiac mesenchymal cell,315,1,heart,100
+malignant cell,314,1,lung,100
+intraepithelial lymphocyte,308,1,others,100
+reticulocyte,305,1,lung,100
+enteric neuron,287,1,pancreas,100
+B-1a B cell,279,1,lung,100
+mononuclear cell,242,1,lung,100
+endothelial cell of periportal hepatic sinusoid,238,1,others,100
+glomerular capillary endothelial cell,235,1,kidney,100
+squamous epithelial cell,227,1,lung,100
+"ILC1, human",213,1,blood,100
+enucleate erythrocyte,202,1,lung,100
+type L enteroendocrine cell,197,1,others,100
+Schwann cell precursor,192,1,lung,100
+pancreatic PP cell,192,1,pancreas,100
+subcutaneous fat cell,189,1,heart,100
+pancreatic epsilon cell,181,1,pancreas,100
+follicular B cell,171,1,others,100
+neutrophil progenitor cell,162,1,others,100
+ionocyte,147,1,lung,100
+M cell of gut,139,1,others,100
+columnar/cuboidal epithelial cell,129,1,kidney,100
+lung secretory cell,128,1,lung,100
+kidney collecting duct cell,125,1,kidney,100
+cholangiocyte,121,1,others,100
+myelocyte,108,1,blood,100
+T-helper 1 cell,101,1,blood,100
+kidney resident macrophage,87,1,kidney,100
+retinal blood vessel endothelial cell,85,1,others,100
+IgM plasma cell,84,1,blood,100
+enteroendocrine cell of colon,82,1,others,100
+"CD34-positive, CD56-positive, CD117-positive common innate lymphoid precursor, human",80,1,lung,100
+type EC enteroendocrine cell,77,1,others,100
+"CD34-positive, CD38-negative hematopoietic stem cell",74,1,blood,100
+"erythroid progenitor cell, mammalian",74,1,blood,100
+enteroendocrine cell of small intestine,72,1,others,100
+bronchial goblet cell,71,1,lung,100
+IgA plasmablast,66,1,blood,100
+tracheobronchial goblet cell,61,1,lung,100
+brush cell of trachebronchial tree,58,1,lung,100
+osteoclast,58,1,others,100
+neoplastic cell,52,1,intestine,100
+paneth cell of epithelium of small intestine,49,1,others,100
+B-2 B cell,46,1,kidney,100
+intestinal enteroendocrine cell,45,1,intestine,100
+urothelial cell,45,1,kidney,100
+endothelial cell of sinusoid,42,1,others,100
+"myeloid dendritic cell, human",41,1,blood,100
+pulmonary ionocyte,41,1,lung,100
+bone marrow cell,36,1,lung,100
+"group 2 innate lymphoid cell, human",36,1,blood,100
+mesothelial fibroblast,36,1,lung,100
+immature Schwann cell,33,1,lung,100
+IgG plasmablast,20,1,blood,100
+hepatic stellate cell,20,1,others,100
+microfold cell of epithelium of small intestine,19,1,others,100
+follicular dendritic cell,17,1,others,100
+T-helper 2 cell,16,1,blood,100
+CD141-positive myeloid dendritic cell,15,1,blood,100
+adipocyte of epicardial fat of left ventricle,15,1,heart,100
+megakaryocyte progenitor cell,15,1,blood,100
+neural progenitor cell,15,1,lung,100
+serous cell of epithelium of bronchus,15,1,lung,100
+serous secreting cell,14,1,lung,100
+"activated CD4-positive, alpha-beta T cell, human",12,1,blood,100
+thymocyte,12,1,lung,100
+endothelial tip cell,11,1,others,100
+B-1 B cell,8,1,kidney,100
+type G enteroendocrine cell,8,1,others,100
+"decidual natural killer cell, human",7,1,blood,100
+placental villous trophoblast,7,1,blood,100
+early promyelocyte,6,1,blood,100
+abnormal cell,5,1,intestine,100
+germinal center B cell,4,1,lung,100
+stratified epithelial cell,4,1,kidney,100
+basophil mast progenitor cell,3,1,blood,100
+enucleated reticulocyte,3,1,blood,100
+late promyelocyte,2,1,blood,100
+skeletal muscle satellite cell,2,1,kidney,100
+"activated CD8-positive, alpha-beta T cell, human",1,1,blood,100
+decidual cell,1,1,blood,100
+keratinocyte,1,1,kidney,100

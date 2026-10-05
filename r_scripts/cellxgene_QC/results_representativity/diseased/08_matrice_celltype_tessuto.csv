@@ -1,0 +1,123 @@
+cell_type,pan-cancer
+B cell,20868
+Bergmann glial cell,1011
+"CD16-negative, CD56-bright natural killer cell, human",23
+"CD16-positive, CD56-dim natural killer cell, human",690
+CD1c-positive myeloid dendritic cell,2072
+"CD4-positive, alpha-beta T cell",31320
+"CD4-positive, alpha-beta cytotoxic T cell",1076
+"CD4-positive, alpha-beta memory T cell",1806
+"CD4-positive, alpha-beta memory T cell, CD45RO-positive",19457
+"CD8-positive, alpha-beta T cell",59841
+"CD8-positive, alpha-beta memory T cell",890
+Kupffer cell,2107
+T cell,105086
+T follicular helper cell,4700
+T-helper 17 cell,11507
+abnormal cell,11841
+absorptive cell,13633
+"activated CD4-positive, alpha-beta T cell",2811
+alveolar macrophage,5745
+alveolar type 1 fibroblast cell,284
+alveolar type 2 fibroblast cell,76
+astrocyte,532
+basophil mast progenitor cell,92
+blood vessel endothelial cell,1910
+bronchus fibroblast of lung,314
+brush cell,382
+brush cell of trachebronchial tree,419
+capillary endothelial cell,1177
+"central memory CD8-positive, alpha-beta T cell",968
+ciliated columnar cell of tracheobronchial tree,231
+class switched memory B cell,94
+classical monocyte,10781
+club cell,223
+colon goblet cell,1967
+common dendritic progenitor,16
+conventional dendritic cell,1147
+dendritic cell,4000
+early promyelocyte,5106
+"effector CD8-positive, alpha-beta T cell",8103
+"effector memory CD8-positive, alpha-beta T cell",8082
+elicited macrophage,1851
+endothelial cell,8031
+endothelial cell of lymphatic vessel,471
+enterocyte of colon,5697
+enteroendocrine cell of colon,117
+epithelial cell,85306
+epithelial cell of alveolus of lung,19
+epithelial cell of lower respiratory tract,47
+epithelial cell of nephron,1216
+erythrocyte,479
+erythroid lineage cell,440
+erythroid progenitor cell,294
+exhausted T cell,14580
+fibroblast,7986
+follicular dendritic cell,108
+fraction A pre-pro B cell,1
+gamma-delta T cell,261
+goblet cell,6337
+hematopoietic multipotent progenitor cell,1373
+hepatic stellate cell,680
+immature B cell,3
+interneuron,169
+intestinal crypt stem cell of colon,1059
+intestinal enteroendocrine cell,165
+intestinal epithelial cell,531
+ionocyte,7
+late promyelocyte,933
+leukocyte,144
+lung macrophage,276
+lung neuroendocrine cell,15
+lung pericyte,143
+lymphoid lineage restricted progenitor cell,913
+macrophage,15891
+malignant cell,89203
+mast cell,2708
+mature NK T cell,1101
+megakaryocyte progenitor cell,62
+megakaryocyte-erythroid progenitor cell,89
+memory B cell,24
+mesenchymal cell,20
+mesenchymal stem cell,2811
+mesothelial cell,12
+multi-ciliated epithelial cell,5
+myelocyte,2736
+myeloid cell,14706
+myofibroblast cell,11
+naive B cell,416
+"naive thymus-derived CD4-positive, alpha-beta T cell",8476
+"naive thymus-derived CD8-positive, alpha-beta T cell",8499
+nasal mucosa goblet cell,441
+native cell,143808
+natural killer cell,1971
+neoplastic cell,64670
+neuron,6381
+neutrophil,1909
+non-classical monocyte,1011
+non-terminally differentiated cell,80
+oligodendrocyte,446
+oligodendrocyte precursor cell,3602
+paneth cell of colon,742
+pericyte,589
+plasma cell,3536
+plasmacytoid dendritic cell,484
+pre-natural killer cell,2
+precursor B cell,4
+pro-B cell,2
+progenitor cell,4001
+pulmonary artery endothelial cell,178
+regulatory T cell,10021
+respiratory basal cell,358
+respiratory hillock cell,80
+stem cell,618
+tracheobronchial goblet cell,1
+tracheobronchial smooth muscle cell,181
+transit amplifying cell,2633
+transit amplifying cell of colon,964
+type I pneumocyte,948
+type II pneumocyte,1790
+unswitched memory B cell,322
+vascular associated smooth muscle cell,2229
+vascular lymphangioblast,51
+vein endothelial cell,297

@@ -1,0 +1,81 @@
+tissue_folder,cell_type,cellule,n_dataset,pct_tessuto,rank_dal_basso
+blood,chondrocyte,1,1,1e-04,1
+blood,alternatively activated macrophage,1,1,1e-04,2
+blood,"activated CD8-positive, alpha-beta T cell, human",1,1,1e-04,3
+blood,decidual cell,1,1,1e-04,4
+blood,myeloid leukocyte,1,1,1e-04,5
+blood,T-helper 17 cell,1,1,1e-04,6
+blood,late promyelocyte,2,1,1e-04,7
+blood,endothelial cell,3,1,2e-04,8
+blood,common myeloid progenitor,3,1,2e-04,9
+blood,basophil mast progenitor cell,3,1,2e-04,10
+brain,Bergmann glial cell,8,2,0.0013,1
+brain,choroid plexus epithelial cell,37,4,0.0061,2
+brain,vascular associated smooth muscle cell,249,20,0.0414,3
+brain,ependymal cell,433,11,0.072,4
+brain,leukocyte,570,21,0.0947,5
+brain,endothelial cell,633,22,0.1052,6
+brain,pericyte,847,22,0.1408,7
+brain,fibroblast,1673,22,0.278,8
+brain,oligodendrocyte precursor cell,11515,22,1.9136,9
+brain,central nervous system macrophage,18621,22,3.0945,10
+heart,alternatively activated macrophage,1,1,1e-04,1
+heart,primordial germ cell,3,1,4e-04,2
+heart,neutrophil,6,1,8e-04,3
+heart,cord blood hematopoietic stem cell,6,1,8e-04,4
+heart,erythroblast,6,1,8e-04,5
+heart,erythrocyte,7,1,9e-04,6
+heart,erythroid progenitor cell,9,1,0.0011,7
+heart,plasma cell,10,2,0.0013,8
+heart,adipocyte of epicardial fat of left ventricle,15,1,0.0019,9
+heart,cell of skeletal muscle,15,1,0.0019,10
+intestine,embryonic stem cell,1,1,0.0012,1
+intestine,epithelial cell of proximal tubule,2,1,0.0024,2
+intestine,acinar cell,4,1,0.0049,3
+intestine,cell of skeletal muscle,5,1,0.0061,4
+intestine,abnormal cell,5,2,0.0061,5
+intestine,primordial germ cell,9,1,0.011,6
+intestine,neutrophil,10,1,0.0122,7
+intestine,erythroid progenitor cell,12,1,0.0147,8
+intestine,endocrine cell,16,1,0.0196,9
+intestine,professional antigen presenting cell,23,1,0.0281,10
+kidney,acinar cell,1,1,2e-04,1
+kidney,chondrocyte,1,1,2e-04,2
+kidney,mature B cell,1,1,2e-04,3
+kidney,keratinocyte,1,1,2e-04,4
+kidney,early lymphoid progenitor,1,1,2e-04,5
+kidney,"double-positive, alpha-beta thymocyte",1,1,2e-04,6
+kidney,promyelocyte,2,1,4e-04,7
+kidney,megakaryocyte-erythroid progenitor cell,2,1,4e-04,8
+kidney,group 2 innate lymphoid cell,2,1,4e-04,9
+kidney,skeletal muscle satellite cell,2,1,4e-04,10
+lung,intestinal epithelial cell,1,1,1e-04,1
+lung,hepatocyte,2,1,2e-04,2
+lung,germinal center B cell,4,1,4e-04,3
+lung,common myeloid progenitor,7,1,7e-04,4
+lung,thymocyte,12,1,0.0012,5
+lung,eosinophil,13,1,0.0013,6
+lung,serous secreting cell,14,1,0.0014,7
+lung,neural progenitor cell,15,1,0.0015,8
+lung,serous cell of epithelium of bronchus,15,1,0.0015,9
+lung,progenitor cell,18,1,0.0018,10
+others,choroid plexus epithelial cell,1,1,1e-04,1
+others,chondrocyte,4,1,4e-04,2
+others,Bergmann glial cell,7,1,6e-04,3
+others,vascular associated smooth muscle cell,8,1,7e-04,4
+others,type G enteroendocrine cell,8,1,7e-04,5
+others,endothelial tip cell,11,1,0.001,6
+others,basophil,15,1,0.0013,7
+others,follicular dendritic cell,17,1,0.0015,8
+others,microfold cell of epithelium of small intestine,19,1,0.0017,9
+others,hepatic stellate cell,20,1,0.0018,10
+pancreas,basal cell,1,1,6e-04,1
+pancreas,Sertoli cell,2,1,0.0012,2
+pancreas,epithelial cell of proximal tubule,3,1,0.0019,3
+pancreas,neutrophil,10,1,0.0062,4
+pancreas,primordial germ cell,13,1,0.0081,5
+pancreas,cell of skeletal muscle,16,1,0.0099,6
+pancreas,erythroid progenitor cell,25,1,0.0155,7
+pancreas,professional antigen presenting cell,44,1,0.0273,8
+pancreas,cord blood hematopoietic stem cell,46,1,0.0285,9
+pancreas,mature NK T cell,47,1,0.0291,10

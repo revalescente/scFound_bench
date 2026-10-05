@@ -1,0 +1,123 @@
+cell_type,cellule,n_dataset,n_donatori,n_tessuti,raro
+tracheobronchial goblet cell,1,1,1,1,TRUE
+fraction A pre-pro B cell,1,1,1,1,TRUE
+pre-natural killer cell,2,1,1,1,TRUE
+pro-B cell,2,1,2,1,TRUE
+immature B cell,3,1,2,1,TRUE
+precursor B cell,4,1,2,1,TRUE
+multi-ciliated epithelial cell,5,1,2,1,TRUE
+ionocyte,7,1,4,1,TRUE
+myofibroblast cell,11,1,5,1,TRUE
+mesothelial cell,12,1,4,1,TRUE
+lung neuroendocrine cell,15,1,1,1,TRUE
+common dendritic progenitor,16,1,5,1,TRUE
+epithelial cell of alveolus of lung,19,1,4,1,TRUE
+mesenchymal cell,20,1,1,1,TRUE
+"CD16-negative, CD56-bright natural killer cell, human",23,1,9,1,TRUE
+memory B cell,24,1,6,1,TRUE
+epithelial cell of lower respiratory tract,47,1,10,1,TRUE
+vascular lymphangioblast,51,1,4,1,TRUE
+megakaryocyte progenitor cell,62,1,5,1,TRUE
+alveolar type 2 fibroblast cell,76,1,8,1,TRUE
+respiratory hillock cell,80,1,5,1,TRUE
+non-terminally differentiated cell,80,1,4,1,TRUE
+megakaryocyte-erythroid progenitor cell,89,1,9,1,TRUE
+basophil mast progenitor cell,92,1,11,1,TRUE
+class switched memory B cell,94,1,13,1,TRUE
+follicular dendritic cell,108,1,19,1,FALSE
+enteroendocrine cell of colon,117,3,6,1,FALSE
+lung pericyte,143,1,10,1,FALSE
+leukocyte,144,1,1,1,FALSE
+intestinal enteroendocrine cell,165,2,24,1,FALSE
+interneuron,169,1,6,1,FALSE
+pulmonary artery endothelial cell,178,1,10,1,FALSE
+tracheobronchial smooth muscle cell,181,1,13,1,FALSE
+club cell,223,1,6,1,FALSE
+ciliated columnar cell of tracheobronchial tree,231,1,11,1,FALSE
+gamma-delta T cell,261,1,9,1,FALSE
+lung macrophage,276,1,11,1,FALSE
+alveolar type 1 fibroblast cell,284,1,7,1,FALSE
+erythroid progenitor cell,294,1,10,1,FALSE
+vein endothelial cell,297,1,10,1,FALSE
+bronchus fibroblast of lung,314,1,14,1,FALSE
+unswitched memory B cell,322,1,14,1,FALSE
+respiratory basal cell,358,1,9,1,FALSE
+brush cell,382,2,29,1,FALSE
+naive B cell,416,1,15,1,FALSE
+brush cell of trachebronchial tree,419,1,3,1,FALSE
+erythroid lineage cell,440,1,5,1,FALSE
+nasal mucosa goblet cell,441,1,6,1,FALSE
+oligodendrocyte,446,2,10,1,FALSE
+endothelial cell of lymphatic vessel,471,2,26,1,FALSE
+erythrocyte,479,3,21,1,FALSE
+plasmacytoid dendritic cell,484,3,35,1,FALSE
+intestinal epithelial cell,531,2,23,1,FALSE
+astrocyte,532,2,10,1,FALSE
+pericyte,589,1,6,1,FALSE
+stem cell,618,3,6,1,FALSE
+hepatic stellate cell,680,1,3,1,FALSE
+"CD16-positive, CD56-dim natural killer cell, human",690,1,15,1,FALSE
+paneth cell of colon,742,3,6,1,FALSE
+"CD8-positive, alpha-beta memory T cell",890,1,15,1,FALSE
+lymphoid lineage restricted progenitor cell,913,1,13,1,FALSE
+late promyelocyte,933,1,15,1,FALSE
+type I pneumocyte,948,1,10,1,FALSE
+transit amplifying cell of colon,964,3,6,1,FALSE
+"central memory CD8-positive, alpha-beta T cell",968,1,12,1,FALSE
+non-classical monocyte,1011,2,25,1,FALSE
+Bergmann glial cell,1011,1,6,1,FALSE
+intestinal crypt stem cell of colon,1059,2,28,1,FALSE
+"CD4-positive, alpha-beta cytotoxic T cell",1076,2,27,1,FALSE
+mature NK T cell,1101,2,23,1,FALSE
+conventional dendritic cell,1147,2,26,1,FALSE
+capillary endothelial cell,1177,1,9,1,FALSE
+epithelial cell of nephron,1216,1,1,1,FALSE
+hematopoietic multipotent progenitor cell,1373,1,11,1,FALSE
+type II pneumocyte,1790,1,14,1,FALSE
+"CD4-positive, alpha-beta memory T cell",1806,1,15,1,FALSE
+elicited macrophage,1851,1,14,1,FALSE
+neutrophil,1909,2,38,1,FALSE
+blood vessel endothelial cell,1910,1,22,1,FALSE
+colon goblet cell,1967,3,6,1,FALSE
+natural killer cell,1971,2,16,1,FALSE
+CD1c-positive myeloid dendritic cell,2072,1,14,1,FALSE
+Kupffer cell,2107,1,3,1,FALSE
+vascular associated smooth muscle cell,2229,2,8,1,FALSE
+transit amplifying cell,2633,2,31,1,FALSE
+mast cell,2708,5,73,1,FALSE
+myelocyte,2736,1,15,1,FALSE
+"activated CD4-positive, alpha-beta T cell",2811,1,21,1,FALSE
+mesenchymal stem cell,2811,1,1,1,FALSE
+plasma cell,3536,6,93,1,FALSE
+oligodendrocyte precursor cell,3602,2,10,1,FALSE
+dendritic cell,4000,2,53,1,FALSE
+progenitor cell,4001,3,6,1,FALSE
+T follicular helper cell,4700,1,20,1,FALSE
+early promyelocyte,5106,1,15,1,FALSE
+enterocyte of colon,5697,3,6,1,FALSE
+alveolar macrophage,5745,1,12,1,FALSE
+goblet cell,6337,2,31,1,FALSE
+neuron,6381,3,11,1,FALSE
+fibroblast,7986,3,79,1,FALSE
+endothelial cell,8031,6,71,1,FALSE
+"effector memory CD8-positive, alpha-beta T cell",8082,2,34,1,FALSE
+"effector CD8-positive, alpha-beta T cell",8103,2,43,1,FALSE
+"naive thymus-derived CD4-positive, alpha-beta T cell",8476,2,31,1,FALSE
+"naive thymus-derived CD8-positive, alpha-beta T cell",8499,3,52,1,FALSE
+regulatory T cell,10021,2,44,1,FALSE
+classical monocyte,10781,2,27,1,FALSE
+T-helper 17 cell,11507,1,24,1,FALSE
+abnormal cell,11841,4,31,1,FALSE
+absorptive cell,13633,2,31,1,FALSE
+exhausted T cell,14580,2,44,1,FALSE
+myeloid cell,14706,6,98,1,FALSE
+macrophage,15891,4,55,1,FALSE
+"CD4-positive, alpha-beta memory T cell, CD45RO-positive",19457,1,24,1,FALSE
+B cell,20868,6,112,1,FALSE
+"CD4-positive, alpha-beta T cell",31320,3,57,1,FALSE
+"CD8-positive, alpha-beta T cell",59841,3,57,1,FALSE
+neoplastic cell,64670,4,38,1,FALSE
+epithelial cell,85306,2,64,1,FALSE
+malignant cell,89203,1,20,1,FALSE
+T cell,105086,9,142,1,FALSE
+native cell,143808,4,52,1,FALSE

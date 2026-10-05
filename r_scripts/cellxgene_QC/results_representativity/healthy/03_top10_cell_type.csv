@@ -1,0 +1,81 @@
+tissue_folder,cell_type,cellule,pct_tessuto,rank
+blood,"CD4-positive, alpha-beta T cell",296133,16.37,1
+blood,"CD8-positive, alpha-beta T cell",226851,12.54,2
+blood,classical monocyte,182010,10.06,3
+blood,natural killer cell,150696,8.33,4
+blood,B cell,118239,6.54,5
+blood,"naive thymus-derived CD4-positive, alpha-beta T cell",87693,4.85,6
+blood,monocyte,58915,3.26,7
+blood,CD14-positive monocyte,55290,3.06,8
+blood,naive B cell,44033,2.43,9
+blood,mature alpha-beta T cell,43891,2.43,10
+brain,neuron,480915,79.92,1
+brain,oligodendrocyte,60760,10.1,2
+brain,astrocyte,25491,4.24,3
+brain,central nervous system macrophage,18621,3.09,4
+brain,oligodendrocyte precursor cell,11515,1.91,5
+brain,fibroblast,1673,0.28,6
+brain,pericyte,847,0.14,7
+brain,endothelial cell,633,0.11,8
+brain,leukocyte,570,0.09,9
+brain,ependymal cell,433,0.07,10
+heart,regular ventricular cardiac myocyte,125289,15.83,1
+heart,cardiac muscle cell,114728,14.5,2
+heart,pericyte,82185,10.38,3
+heart,fibroblast,74476,9.41,4
+heart,capillary endothelial cell,59326,7.5,5
+heart,native cell,43541,5.5,6
+heart,smooth muscle cell,24091,3.04,7
+heart,regular atrial cardiac myocyte,23585,2.98,8
+heart,fibroblast of cardiac tissue,22511,2.84,9
+heart,endothelial cell,22096,2.79,10
+intestine,intestinal epithelial cell,24664,30.17,1
+intestine,stromal cell,14412,17.63,2
+intestine,epithelial cell,10376,12.69,3
+intestine,enterocyte,9980,12.21,4
+intestine,absorptive cell,3400,4.16,5
+intestine,myeloid cell,2862,3.5,6
+intestine,neuron,2578,3.15,7
+intestine,innate lymphoid cell,2144,2.62,8
+intestine,glial cell,2087,2.55,9
+intestine,endothelial cell of vascular tree,1459,1.78,10
+kidney,native cell,91041,19.21,1
+kidney,epithelial cell of proximal tubule,74589,15.74,2
+kidney,mesangial cell,44490,9.39,3
+kidney,kidney loop of Henle thick ascending limb epithelial cell,35103,7.41,4
+kidney,endothelial cell,23207,4.9,5
+kidney,epithelial cell,20147,4.25,6
+kidney,kidney collecting duct principal cell,17069,3.6,7
+kidney,kidney distal convoluted tubule epithelial cell,12079,2.55,8
+kidney,kidney epithelial cell,11116,2.35,9
+kidney,kidney collecting duct intercalated cell,10791,2.28,10
+lung,alveolar macrophage,133931,13.16,1
+lung,epithelial cell of lower respiratory tract,83409,8.19,2
+lung,type II pneumocyte,76458,7.51,3
+lung,stromal cell,73721,7.24,4
+lung,native cell,57126,5.61,5
+lung,macrophage,39550,3.89,6
+lung,classical monocyte,36425,3.58,7
+lung,mesenchymal cell,33235,3.26,8
+lung,natural killer cell,25474,2.5,9
+lung,fibroblast of lung,25069,2.46,10
+others,retinal rod cell,141250,12.7,1
+others,mesenchymal cell,125476,11.28,2
+others,enterocyte,49131,4.42,3
+others,native cell,37701,3.39,4
+others,Sertoli cell,35281,3.17,5
+others,Mueller cell,30034,2.7,6
+others,epithelial cell of esophagus,26299,2.36,7
+others,ON-bipolar cell,25424,2.29,8
+others,macrophage,24715,2.22,9
+others,endothelial cell,22693,2.04,10
+pancreas,type B pancreatic cell,22249,13.79,1
+pancreas,pancreatic A cell,21474,13.31,2
+pancreas,pancreatic acinar cell,19283,11.95,3
+pancreas,acinar cell,14643,9.08,4
+pancreas,pancreatic ductal cell,13052,8.09,5
+pancreas,T cell,7973,4.94,6
+pancreas,stromal cell,6770,4.2,7
+pancreas,innate lymphoid cell,6330,3.92,8
+pancreas,epithelial cell of exocrine pancreas,5567,3.45,9
+pancreas,endocrine cell,5424,3.36,10

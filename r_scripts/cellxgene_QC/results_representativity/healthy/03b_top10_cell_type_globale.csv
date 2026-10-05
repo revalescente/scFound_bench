@@ -1,0 +1,11 @@
+cell_type,cellule,n_tessuti,n_dataset,n_donatori,pct_totale
+neuron,493337,7,30,45,8.15
+"CD4-positive, alpha-beta T cell",324789,4,21,310,5.37
+"CD8-positive, alpha-beta T cell",249941,4,19,330,4.13
+native cell,233054,6,21,222,3.85
+classical monocyte,218990,3,18,317,3.62
+natural killer cell,184774,5,35,482,3.05
+mesenchymal cell,163828,3,5,46,2.71
+retinal rod cell,141250,1,4,14,2.33
+B cell,139301,7,38,477,2.3
+stromal cell,134343,6,7,61,2.22

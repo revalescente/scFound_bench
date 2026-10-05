@@ -52,3 +52,10 @@ sce$auto_broad_cell_type <- sapply(
 
 # 3. Controlla il risultato pulito
 unique(sce$auto_broad_cell_type, useNA = "always")
+
+# no non funziona, usiamo ontoProc
+
+library(ontoProc)
+
+cl <- getOnto("cellOnto", "2023")
+opi <- graph_from_graphnel(onto_plot2(cl_onto))
