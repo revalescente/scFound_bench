@@ -1,0 +1,6 @@
+[submodule "vendor/geneformer"]
+	path = vendor/geneformer
+	url = https://github.com/jkobject/geneformer.git
+[submodule "vendor/scGPT"]
+	path = vendor/scGPT
+	url = https://github.com/bowang-lab/scGPT.git
